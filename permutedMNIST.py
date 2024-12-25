@@ -44,14 +44,36 @@ class PermutedMNIST(Dataset):
         return self.data[idx], self.targets[idx]
     
 
+def smooth_signal(signal, window_size):
 
-def plot_results(task_performance):
+    if window_size % 2 == 0:
+        raise ValueError("Window size must be odd to ensure symmetry.")
+    
+    half_window = window_size // 2
+    padded_signal = np.pad(signal, (half_window, half_window), mode='edge')
+    smoothed_signal = np.convolve(padded_signal, np.ones(window_size) / window_size, mode='valid')
+    return smoothed_signal
+
+
+
+
+
+def plot_results(task_performance,smoothing=True,window=11):
     
 
     # Plot training and testing accuracy across tasks
     plt.figure(figsize=(12, 5))
-    plt.plot(task_performance["train_acc"], label="Train Accuracy")
-    plt.plot(task_performance["test_acc"], label="Test Accuracy")
+
+    train_acc = task_performance["train_acc"]
+    test_acc = task_performance["test_acc"]
+
+    if smoothing:
+        train_acc = smooth_signal(train_acc,window)
+        test_acc = smooth_signal(test_acc,window)
+
+
+    plt.plot(train_acc, label="Train Accuracy")
+    plt.plot(test_acc, label="Test Accuracy")
     plt.xlabel("Task")
     plt.ylabel("Accuracy")
     plt.title("Model Performance Across Tasks")
@@ -62,28 +84,14 @@ def plot_results(task_performance):
 
 
 def main():
-    num_tasks = 10
+    num_tasks = 500
     permutations = [np.random.permutation(28 * 28) for _ in range(num_tasks)]
 
     mnist_train = datasets.MNIST(root="./data", train=True, download=True, transform=transforms.ToTensor())
     mnist_test = datasets.MNIST(root="./data", train=False, download=True, transform=transforms.ToTensor())
 
-    task_datasets = []
 
-    for task_id, perm in enumerate(permutations):
-        train_dataset = PermutedMNIST(mnist_train, perm)
-        test_dataset = PermutedMNIST(mnist_test, perm)
-        task_datasets.append((train_dataset, test_dataset))
-
-    batch_size = 64
-
-    # DataLoaders for each task
-    task_loaders = [
-        (DataLoader(train_dataset, batch_size=batch_size, shuffle=True),
-        DataLoader(test_dataset, batch_size=batch_size, shuffle=False))
-        for train_dataset, test_dataset in task_datasets
-    ]
-
+    batch_size = 32
 
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -93,10 +101,13 @@ def main():
 
     task_performance = {"train_loss": [], "train_acc": [], "test_loss": [], "test_acc": []} 
 
-    for task_id, (train_dataset, test_dataset) in enumerate(task_datasets):
-        print(f"\nTask {task_id + 1}/{len(task_datasets)}")
-        train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-        test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
+
+    for task_id, perm in enumerate(permutations):
+        print(f"\nTask {task_id + 1}/{len(permutations)}")
+        train_dataset = PermutedMNIST(mnist_train, perm)
+        test_dataset = PermutedMNIST(mnist_test, perm)
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
         train_loss, train_acc = train_model(model, train_loader, optimizer, criterion, device)
 
@@ -110,6 +121,8 @@ def main():
 
         print(f"Task {task_id + 1} - Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}")
         print(f"Task {task_id + 1} - Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
+
+
 
     plot_results(task_performance)
 
