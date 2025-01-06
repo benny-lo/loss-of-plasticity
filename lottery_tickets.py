@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
 from torchvision import datasets, transforms
-
+import time
 
 from models import train_model, evaluate_model, SimpleMLP
 
@@ -13,6 +13,11 @@ def prune_model(model, mask, s):
     with torch.no_grad():
         weights = torch.cat([param[mask[idx] > 0].abs().view(-1) for idx, param in enumerate(model.parameters())])
         threshold = torch.quantile(weights, s / 100)
+
+        if threshold == 0:
+            print("warning very sparse parameters")
+            threshold = 1e-6
+
         for idx, param in enumerate(model.parameters()):
             mask[idx][param.abs() < threshold] = 0
             param[mask[idx] == 0] = 0
@@ -42,7 +47,24 @@ class MNIST(Dataset):
 
 
 
-def find_winning_ticket(model, train_loader, test_loader, criterion, performance_threshold=None, s=20):
+def find_winning_ticket(model,train_loader=None, test_loader=None, criterion=None, performance_threshold=None, s=20):
+
+    if train_loader is None:
+        mnist_train = datasets.MNIST(root="./data", train=True, download=True, transform=transforms.ToTensor())
+        mnist_test = datasets.MNIST(root="./data", train=False, download=True, transform=transforms.ToTensor())
+
+
+
+        train_dataset = MNIST(mnist_train)
+        test_dataset = MNIST(mnist_test)
+        batch_size = 32
+
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+
+
+        criterion = nn.CrossEntropyLoss()
+
 
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
@@ -74,14 +96,15 @@ def find_winning_ticket(model, train_loader, test_loader, criterion, performance
         current_performance = evaluate_model(model, test_loader=test_loader, criterion=criterion, device="cpu")[1]
         print(f"Performance after pruning: {current_performance}")
 
-        
         for _ in range(num_epochs):
             train_model(model, train_loader=train_loader, optimizer=optimizer, criterion=criterion,device="cpu",mask= mask)
 
         curr_performance = evaluate_model(model, test_loader=test_loader, criterion=criterion, device="cpu")[1]
         print(f"Performance before pruning: {curr_performance}")
 
+
         pruning_percentage(model)
+
 
     print("Winning ticket found!")
 

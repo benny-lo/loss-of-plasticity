@@ -37,36 +37,9 @@ def train_model(model, train_loader, optimizer, criterion, device, mask = None):
             
             with torch.no_grad():
                 for idx, param in enumerate(model.parameters()):
-                    
-                    zeros = param[mask[idx] == 0]
-                    """print("### before step ###")
-                    print(zeros)
-                    print(zeros.sum())"""
-                    
-
-                    """indices = torch.nonzero(mask[idx]==0)
-
-                    for i in range(indices.shape[0]):
-                        for j in range(indices.shape[1]):
-                            param.grad[indices[i][j]] = 0
-
-                            print(param[indices[i][j]])"""
-                            
-
-
-                    #param.grad.mul_(mask[idx]) 
                     param.grad[mask[idx] == 0] = 0
 
         optimizer.step()
-
-        if mask is not None:
-            
-            with torch.no_grad():
-                for idx, param in enumerate(model.parameters()):
-                    zeros = param[mask[idx] == 0]
-                    """print("### after step ###")
-                    print(zeros)
-                    print(zeros.sum())"""
 
         running_loss += loss.item()
         _, predicted = torch.max(outputs, 1)

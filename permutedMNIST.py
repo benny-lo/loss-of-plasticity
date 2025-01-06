@@ -8,6 +8,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 
 from models import SimpleMLP, train_model, evaluate_model
+import copy
 
 
 def permute_mnist(data, permutation):
@@ -80,26 +81,24 @@ def plot_results(task_performance,smoothing=True,window=11):
     plt.legend()
     plt.show()
 
-    
 
 
-def main():
-    num_tasks = 500
+def lop_experiment1(model, num_tasks=500, batch_size= 32):    
     permutations = [np.random.permutation(28 * 28) for _ in range(num_tasks)]
 
     mnist_train = datasets.MNIST(root="./data", train=True, download=True, transform=transforms.ToTensor())
     mnist_test = datasets.MNIST(root="./data", train=False, download=True, transform=transforms.ToTensor())
 
-
-    batch_size = 32
-
-
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = SimpleMLP().to(device)
+
+    model = model.to(device)
+
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     criterion = nn.CrossEntropyLoss()
 
     task_performance = {"train_loss": [], "train_acc": [], "test_loss": [], "test_acc": []} 
+
+    snapshots = {"early": None, "mid": None, "end": None}
 
 
     for task_id, perm in enumerate(permutations):
@@ -124,7 +123,33 @@ def main():
 
 
 
+        if task_id == 4:  # After 5 iterations
+            snapshots["early"] = copy.deepcopy(model.state_dict())
+            torch.save(model.state_dict(),  "snapshot_early.pth")
+        elif task_id == num_tasks // 2:  # Midway through tasks
+            snapshots["mid"] = copy.deepcopy(model.state_dict())
+            torch.save(model.state_dict(),  "snapshot_mid.pth")
+        elif task_id == num_tasks - 1:  # End of all tasks
+            snapshots["end"] = copy.deepcopy(model.state_dict())
+            torch.save(model.state_dict(),  "snapshot_late.pth")
+
+
+
     plot_results(task_performance)
+
+    return snapshots
+
+
+
+
+
+def main():
+
+    
+    model = SimpleMLP()
+
+    lop_experiment1(model)
+    
 
 
 
