@@ -7,6 +7,18 @@ import time
 
 from models import train_model, evaluate_model, SimpleMLP
 
+class MNIST(Dataset):
+    def __init__(self, mnist_data):
+        
+        self.data = mnist_data.data
+        self.targets = mnist_data.targets
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        return self.data[idx], self.targets[idx]
+
 
 def prune_model(model, mask, s):
     """Prune s% of the parameters."""
@@ -31,18 +43,23 @@ def reset_weights(model, initial_state, mask):
             param[mask[idx] > 0] = initial_state[idx][mask[idx] > 0]
 
 
+def initialize_mnist():
+    mnist_train = datasets.MNIST(root="./data", train=True, download=True, transform=transforms.ToTensor())
+    mnist_test = datasets.MNIST(root="./data", train=False, download=True, transform=transforms.ToTensor())
 
-class MNIST(Dataset):
-    def __init__(self, mnist_data):
-        
-        self.data = mnist_data.data
-        self.targets = mnist_data.targets
 
-    def __len__(self):
-        return len(self.data)
 
-    def __getitem__(self, idx):
-        return self.data[idx], self.targets[idx]
+    train_dataset = MNIST(mnist_train)
+    test_dataset = MNIST(mnist_test)
+    batch_size = 32
+
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+
+
+    criterion = nn.CrossEntropyLoss()
+
+    return train_loader, test_loader, criterion
 
 
 
@@ -50,20 +67,8 @@ class MNIST(Dataset):
 def find_winning_ticket(model,train_loader=None, test_loader=None, criterion=None, performance_threshold=None, s=20):
 
     if train_loader is None:
-        mnist_train = datasets.MNIST(root="./data", train=True, download=True, transform=transforms.ToTensor())
-        mnist_test = datasets.MNIST(root="./data", train=False, download=True, transform=transforms.ToTensor())
-
-
-
-        train_dataset = MNIST(mnist_train)
-        test_dataset = MNIST(mnist_test)
-        batch_size = 32
-
-        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-
-
-        criterion = nn.CrossEntropyLoss()
+        train_loader, test_loader, criterion = initialize_mnist()
+        
 
 
     optimizer = optim.Adam(model.parameters(), lr=0.001)
@@ -130,20 +135,10 @@ def pruning_percentage(model):
 def main():
 
     model = SimpleMLP()
-    mnist_train = datasets.MNIST(root="./data", train=True, download=True, transform=transforms.ToTensor())
-    mnist_test = datasets.MNIST(root="./data", train=False, download=True, transform=transforms.ToTensor())
+    
 
 
-
-    train_dataset = MNIST(mnist_train)
-    test_dataset = MNIST(mnist_test)
-    batch_size = 32
-
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-
-
-    criterion = nn.CrossEntropyLoss()
+    train_loader, test_loader, criterion = initialize_mnist()
     
     performance_threshold = 0.95
     s = 20

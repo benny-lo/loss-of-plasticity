@@ -26,6 +26,9 @@ def permute_mnist(data, permutation):
     permuted_data = flattened_data[:, permutation]  # Apply permutation
     return permuted_data.view(data.size(0), 28, 28)  # Reshape back to (N, 28, 28)
 
+
+
+
 class PermutedMNIST(Dataset):
     def __init__(self, mnist_data, permutation):
         """
