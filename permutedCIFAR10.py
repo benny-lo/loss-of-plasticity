@@ -7,52 +7,40 @@ import torch.optim as optim
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-from models import SimpleMLP, train_model, evaluate_model, plot_results, smooth_signal
+from models import SimpleVGG, train_model, evaluate_model, plot_results
 import copy
 
 
-def permute_mnist(data, permutation):
-    """
-    Applies a permutation to the flattened MNIST images.
+def permute_image(image, perm):
 
-    Args:
-        data: Torch tensor of shape (N, 28, 28) or (N, 784).
-        permutation: List or numpy array specifying the pixel shuffling.
-
-    Returns:
-        Permuted data of the same shape.
-    """
-    flattened_data = data.view(data.size(0), -1)  # Flatten the images
-    permuted_data = flattened_data[:, permutation]  # Apply permutation
-    return permuted_data.view(data.size(0), 28, 28)  # Reshape back to (N, 28, 28)
+    img_flat = image.view(-1)
+    permuted_img = img_flat[perm]
+    
+    permuted_img = permuted_img.view(3, 32, 32)
+    return permuted_img
 
 
+class PermutedCIFAR10(torch.utils.data.Dataset):
+    def __init__(self, dataset, permutation):
+        self.dataset = dataset
+        self.permutation = permutation
 
-
-class PermutedMNIST(Dataset):
-    def __init__(self, mnist_data, permutation):
-        """
-        Custom dataset for Permuted MNIST.
-
-        Args:
-            mnist_data: Torch dataset (e.g., training or testing MNIST data).
-            permutation: List or numpy array specifying the pixel shuffling.
-        """
-        self.data = permute_mnist(mnist_data.data, permutation)
-        self.targets = mnist_data.targets
+    def __getitem__(self, index):
+        
+        image, label = self.dataset[index]
+        
+        #permuted_image = permute_image(image, self.permutation)
+        permuted_image = image
+        return permuted_image, label
 
     def __len__(self):
-        return len(self.data)
-
-    def __getitem__(self, idx):
-        return self.data[idx], self.targets[idx]
+        return len(self.dataset)
     
 
-def lop_experiment1(model, num_tasks=500, batch_size= 32):    
-    permutations = [np.random.permutation(28 * 28) for _ in range(num_tasks)]
 
-    mnist_train = datasets.MNIST(root="./data", train=True, download=True, transform=transforms.ToTensor())
-    mnist_test = datasets.MNIST(root="./data", train=False, download=True, transform=transforms.ToTensor())
+
+def lop_experiment1(model, num_tasks=500, batch_size= 32):    
+    
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -66,14 +54,23 @@ def lop_experiment1(model, num_tasks=500, batch_size= 32):
     snapshots = {"early": None, "mid": None, "end": None}
 
 
+    permutations = [np.random.permutation(3 * 32 * 32) for _ in range(num_tasks)]
+
+    train_set = datasets.CIFAR10(root='./data', train=True, download=False, transform=transforms.ToTensor())
+    test_set = datasets.CIFAR10(root='./data', train=False, download=False, transform=transforms.ToTensor())
+
+    batch_size = 16
+
+
     for task_id, perm in enumerate(permutations):
         print(f"\nTask {task_id + 1}/{len(permutations)}")
-        train_dataset = PermutedMNIST(mnist_train, perm)
-        test_dataset = PermutedMNIST(mnist_test, perm)
+
+        train_dataset = PermutedCIFAR10(train_set,perm)
+        test_dataset = PermutedCIFAR10(test_set,perm)
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
         test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-        train_loss, train_acc = train_model(model, train_loader, optimizer, criterion, device)
+        train_loss, train_acc = train_model(model, train_loader, optimizer, criterion, device, num_epochs=3)
 
         test_loss, test_acc = evaluate_model(model, test_loader, criterion, device)
 
@@ -90,13 +87,13 @@ def lop_experiment1(model, num_tasks=500, batch_size= 32):
 
         if task_id == 4:  # After 5 iterations
             snapshots["early"] = copy.deepcopy(model.state_dict())
-            torch.save(model.state_dict(),  "snapshot_early.pth")
+            torch.save(model.state_dict(),  "snapshot_early_cifar.pth")
         elif task_id == num_tasks // 2:  # Midway through tasks
             snapshots["mid"] = copy.deepcopy(model.state_dict())
-            torch.save(model.state_dict(),  "snapshot_mid.pth")
+            torch.save(model.state_dict(),  "snapshot_mid_cifar.pth")
         elif task_id == num_tasks - 1:  # End of all tasks
             snapshots["end"] = copy.deepcopy(model.state_dict())
-            torch.save(model.state_dict(),  "snapshot_late.pth")
+            torch.save(model.state_dict(),  "snapshot_late_cifar.pth")
 
 
 
@@ -106,19 +103,16 @@ def lop_experiment1(model, num_tasks=500, batch_size= 32):
 
 
 
-
-
 def main():
 
     
-    model = SimpleMLP()
+    model = SimpleVGG()
 
     lop_experiment1(model)
     
 
 
-
-
 if __name__ == "__main__":
     main()
+    
 

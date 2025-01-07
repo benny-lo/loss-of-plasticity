@@ -64,7 +64,7 @@ def initialize_mnist():
 
 
 
-def find_winning_ticket(model,train_loader=None, test_loader=None, criterion=None, performance_threshold=None, s=20):
+def find_winning_ticket(model,train_loader=None, test_loader=None, criterion=None, performance_threshold=None, s=20, num_iter=5):
 
     if train_loader is None:
         train_loader, test_loader, criterion = initialize_mnist()
@@ -90,7 +90,7 @@ def find_winning_ticket(model,train_loader=None, test_loader=None, criterion=Non
     if performance_threshold == None:
         performance_threshold = current_performance
 
-    while current_performance <= performance_threshold:
+    for iter in range(num_iter):
         # Prune the model
         mask = prune_model(model, mask, s)
         
@@ -111,7 +111,8 @@ def find_winning_ticket(model,train_loader=None, test_loader=None, criterion=Non
         pruning_percentage(model)
 
 
-    print("Winning ticket found!")
+    if curr_performance > 0.9:
+        print("Winning ticket found!")
 
     return mask
 
@@ -139,7 +140,8 @@ def main():
 
 
     train_loader, test_loader, criterion = initialize_mnist()
-    
+
+
     performance_threshold = 0.95
     s = 20
 

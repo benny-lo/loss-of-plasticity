@@ -51,7 +51,8 @@ def overlap_lop(state_dict):
 
     for i in range(num_tickets):
         model = SimpleMLP()
-        model.load_state_dict(state_dict)
+        
+        #model.load_state_dict(state_dict)
         tickets.append(find_winning_ticket(model))
         
     n = len(tickets)
@@ -78,13 +79,15 @@ def main():
 
     # alternatively, load the saved checkpoints
 
-    early = torch.load("snapshot_early.pth")
-    mid = torch.load("snapshot_mid.pth")
-    late = torch.load("snapshot_late.pth")
+    
+    torch.manual_seed(42)
+
+    early=torch.load("snapshot_early.pth")# 75 5 tasks
+    mid = torch.load("snapshot_mid.pth")# > 90 250 tasks
+    late= torch.load("snapshot_late.pth")#> 90 500 tasks
 
 
     early_overlap  = overlap_lop(early)
-    
 
     mid_overlap  = overlap_lop(mid)
     late_overlap  = overlap_lop(late)
