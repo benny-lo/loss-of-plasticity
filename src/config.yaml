@@ -1,0 +1,10 @@
+general:
+  seed: 42
+  dataset: 'mnist'
+  num_epochs: 10
+  batch_size: 32
+  lr: 0.001
+
+lop:
+  num_tasks: 501
+  save_freq: 50
