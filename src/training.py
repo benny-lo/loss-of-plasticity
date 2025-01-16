@@ -1,12 +1,28 @@
 import torch
 from tqdm import tqdm 
 
+
+def mask_out(model, mask):
+    for idx, param in enumerate(model.parameters()):
+        param = param * mask[idx]
+
+def set_grad_zero(model, mask):
+    for idx, param in enumerate(model.parameters()):
+        param.grad = param.grad * mask[idx]
+
+
+
+
 def train_model(model, train_loader, optimizer, criterion, device='cpu', num_epochs=10, mask = None):
     model.train()
     running_loss = 0.0
     correct = 0
     total = 0
             
+    if mask:
+        mask_out(model, mask)
+
+
     for epoch in range(num_epochs):
 
         for images, labels in tqdm(train_loader, desc="Training"):
@@ -17,6 +33,9 @@ def train_model(model, train_loader, optimizer, criterion, device='cpu', num_epo
             outputs = model(images)
             loss = criterion(outputs, labels)
             loss.backward()
+            
+            if mask:
+                set_grad_zero(model,mask)
 
             optimizer.step()
 
