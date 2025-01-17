@@ -7,9 +7,9 @@ import torch.optim as optim
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-from models import SimpleMLP, train_model, evaluate_model
-from permutedMNIST import lop_experiment1
-from lottery_tickets import find_winning_ticket
+import models
+from training import train_model, evaluate_model
+from actual_lottery_tickets import find_winning_ticket
 
 
      ###   Goal is to find the relationship between overlap of winning tickets and plasticity ###
@@ -41,7 +41,6 @@ def compute_pairwise_overlap(mask1, mask2):
     
     return overlap_percentage
 
-import torch
 
 def compute_overlap(*masks):
 
@@ -62,57 +61,9 @@ def compute_overlap(*masks):
     return overlap_percentage
 
 
-
-def overlap_lop(state_dict):
-
-    num_tickets = 2
-
-    tickets = []
-
-    for i in range(num_tickets):
-        model = SimpleMLP()
-        
-        #model.load_state_dict(state_dict)
-        tickets.append(find_winning_ticket(model))
-        
-    n = len(tickets)
-    overlap = 0
-
-    for i in range(n):
-        for j in range(i+1,n):
-            overlap += compute_pairwise_overlap(tickets[i],tickets[j])
-
-    overlap /= n*(n-1)/2
-
-
-    return overlap
-
-
-
-
-
-
 def main():
 
-    
-    # early, mid, late = lop_experiment1(model)
-
-    # alternatively, load the saved checkpoints
-
-    
-    torch.manual_seed(42)
-
-    early=torch.load("snapshot_early.pth")# 75 5 tasks
-    mid = torch.load("snapshot_mid.pth")# > 90 250 tasks
-    late= torch.load("snapshot_late.pth")#> 90 500 tasks
-
-
-    early_overlap  = overlap_lop(early)
-
-    mid_overlap  = overlap_lop(mid)
-    late_overlap  = overlap_lop(late)
-
-    print(early_overlap, mid_overlap, late_overlap)
+   pass
 
 
 

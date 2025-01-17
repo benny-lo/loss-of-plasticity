@@ -5,6 +5,8 @@ import box
 import random
 import torch
 import pickle
+from actual_lottery_tickets import find_winning_ticket
+from overlap import compute_pairwise_overlap, compute_overlap
 
 def load_config():
     with open('./src/config.yaml', 'r', encoding='utf-8') as file:
@@ -55,3 +57,41 @@ def plot_results(task_performance,smoothing=True,window=11):
     plt.title("Model Performance Across Tasks")
     plt.legend()
     plt.show()
+
+def winning_tickets_helper(file_name, num_tickets, pairwise,target_percentage,pruning_rounds,num_epochs):
+    model = torch.load(file_name)
+    masks = []
+    for ticket_id in range(num_tickets):
+        mask, _ = find_winning_ticket(model,target_percentage,pruning_rounds,num_epochs)
+        masks.append(mask)
+
+    if pairwise:
+        overlaps = []
+        for i in range(num_tickets):
+            for j in range(i+1,num_tickets):
+                overlaps.append(compute_pairwise_overlap(masks[i],masks[j]))
+        overlaps = np.array(overlaps)
+        avg_overlap, std_overlap = np.mean(overlaps), np.std(overlaps)
+        return {'average pairwise overlap':avg_overlap, 'pairwise overlap std':std_overlap}
+
+    else:
+        total_overlap = compute_overlap(masks)
+        return {'total_overlap': total_overlap}
+    
+def aggregate_gradient_stats(gradients):
+    num_tasks = len(gradients)
+    stats_dict = {}
+
+    avg_grad = [torch.zeros_like(param_grad) for param_grad in gradients[0] ]
+
+    for grad in gradients:
+        for param_idx,param_grad in enumerate(grad):
+            avg_grad[param_idx] += param_grad / num_tasks
+        
+    stats_dict['avg_grad'] = avg_grad
+    return stats_dict
+        
+
+
+
+

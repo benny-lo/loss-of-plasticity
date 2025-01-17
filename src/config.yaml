@@ -10,7 +10,7 @@ lop:
   save_freq: 50
 
 winning_tickets_masks:
-  models_dir: ''
+  models_dir: './results/lop/'
   num_tickets: 10
   pairwise: True
   target_percentage: 0.2

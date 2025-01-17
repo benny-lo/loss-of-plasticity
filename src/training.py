@@ -73,3 +73,38 @@ def evaluate_model(model, test_loader, criterion, device, mask=None):
     accuracy = correct / total
     avg_loss = running_loss / len(test_loader)
     return avg_loss, accuracy
+
+def train_model_gradient(model,train_loader, optimizer, criterion, device='cpu', num_epochs=10, mask = None):
+    model.train()
+    
+            
+    if mask:
+        mask_out(model, mask)
+
+    grad = []
+    for epoch in range(num_epochs):
+
+        
+        for param in model.parameters():
+            grad.append(torch.zeros_like(param))
+
+        for images, labels in tqdm(train_loader, desc="Training"):
+            images, labels = images.to(device).to(torch.float), labels.to(device)
+
+            optimizer.zero_grad()
+
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            
+            if mask:
+                set_grad_zero(model,mask)
+
+            for i,param in enumerate(model.parameters()):
+                grad[i] += param.grad.abs()
+            
+            optimizer.step()
+
+    grad /= (num_epochs * len(train_loader))
+
+    return grad

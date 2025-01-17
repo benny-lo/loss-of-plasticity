@@ -7,6 +7,7 @@ import training
 import os
 from overlap import compute_pairwise_overlap, compute_overlap
 from actual_lottery_tickets import find_winning_ticket
+import box
 
 def lop(cfg, dataset, device):
     if cfg.general.dataset == 'mnist':
@@ -56,26 +57,6 @@ def lop(cfg, dataset, device):
     utils.pickle_obj(obj=task_performance, path='./results/lop/task_performance')
 
 
-def winning_tickets_helper(file_name, num_tickets, pairwise,target_percentage,pruning_rounds,num_epochs):
-    model = torch.load(file_name)
-    masks = []
-    for ticket_id in range(num_tickets):
-        mask, _ = find_winning_ticket(model,target_percentage,pruning_rounds,num_epochs)
-        masks.append(mask)
-
-    if pairwise:
-        overlaps = []
-        for i in range(num_tickets):
-            for j in range(i+1,num_tickets):
-                overlaps.append(compute_pairwise_overlap(masks[i],masks[j]))
-        overlaps = np.array(overlaps)
-        avg_overlap, std_overlap = np.mean(overlaps), np.std(overlaps)
-        return {'average pairwise overlap':avg_overlap, 'pairwise overlap std':std_overlap}
-
-    else:
-        total_overlap = compute_overlap(masks)
-        return {'total_overlap': total_overlap}
-
 def winning_tickets_masks(cfg):
     models_dir = cfg.winning_tickets_masks.models_dir
     num_tickets = cfg.winning_tickets_masks.num_tickets
@@ -90,9 +71,39 @@ def winning_tickets_masks(cfg):
 
     for file_path in checkpoints:
         file_name = os.path.basename(file_path, num_tickets, pairwise)
-        stats_dict[file_name] = winning_tickets_helper(file_name,num_tickets,pairwise,target_percentage,pruning_rounds,num_epochs)
+        stats_dict[file_name] = utils.winning_tickets_helper(file_name,num_tickets,pairwise,target_percentage,pruning_rounds,num_epochs)
 
-    print(stats_dict)
+    utils.pickle_obj(obj=stats_dict, path='./results/winning_tickets_masks/stats_dict')
+
+
+
+def parameter_plasticity(cfg,model,dataset,device):
+    train = dataset[0]
+
+    model = model.to(device)
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=cfg.general.lr)
+    criterion = torch.nn.CrossEntropyLoss()
+
+    permutations = [np.random.permutation(28 * 28) for _ in range(cfg.lop.num_tasks)]
+
+    gradients = []
+    for task_id, perm in enumerate(permutations):
+        print(f"\nTask {task_id + 1}/{len(permutations)}")
+
+
+        if cfg.general.dataset == 'mnist':
+            perm_train = datasets.mnist.PermutedMNIST(train, perm)
+        
+        train_loader = torch.utils.data.DataLoader(perm_train, batch_size=cfg.general.batch_size, shuffle=True)
+
+        gradient = training.train_model_gradient(model, train_loader, optimizer, criterion, device, num_epochs=cfg.general.num_epochs)
+        gradients.append(gradient)
+
+    gradients_stats = utils.aggregate_gradient_stats(gradients)
+
+    utils.pickle_obj(obj=gradients_stats, path='./results/parameter_plasticity/gradients_stats')
+
 
 
 def main():
