@@ -15,7 +15,7 @@ from lottery_tickets import find_winning_ticket
      ###   Goal is to find the relationship between overlap of winning tickets and plasticity ###
 
 
-def compute_overlap(mask1, mask2):
+def compute_pairwise_overlap(mask1, mask2):
 
     assert(len(mask1)== len(mask2))
 
@@ -41,6 +41,26 @@ def compute_overlap(mask1, mask2):
     
     return overlap_percentage
 
+import torch
+
+def compute_overlap(*masks):
+
+    assert all(len(mask) == len(masks[0]) for mask in masks), "All masks must have the same length."
+
+    intersection = 0
+    union = 0
+
+    for idx in range(len(masks[0])):
+        bin_masks = [ (mask[idx] != 0).float() for mask in masks ]
+
+        intersection += torch.sum(torch.prod(torch.stack(bin_masks), dim=0))
+
+        union += torch.sum(torch.any(torch.stack(bin_masks), dim=0).float())
+
+    overlap_percentage = (intersection / union) * 100 if union > 0 else 0.0
+
+    return overlap_percentage
+
 
 
 def overlap_lop(state_dict):
@@ -60,7 +80,7 @@ def overlap_lop(state_dict):
 
     for i in range(n):
         for j in range(i+1,n):
-            overlap += compute_overlap(tickets[i],tickets[j])
+            overlap += compute_pairwise_overlap(tickets[i],tickets[j])
 
     overlap /= n*(n-1)/2
 
