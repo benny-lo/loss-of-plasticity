@@ -5,11 +5,15 @@ import box
 import random
 import torch
 import pickle
+import models
+import os
+import re
 from actual_lottery_tickets import find_winning_ticket
 from overlap import compute_pairwise_overlap, compute_overlap
+import datasets
 
 def load_config():
-    with open('./src/config.yaml', 'r', encoding='utf-8') as file:
+    with open('./config.yaml', 'r', encoding='utf-8') as file:
         config = yaml.safe_load(file)
     return box.Box(config)
 
@@ -58,18 +62,44 @@ def plot_results(task_performance,smoothing=True,window=11):
     plt.legend()
     plt.show()
 
-def winning_tickets_helper(file_name, num_tickets, pairwise,target_percentage,pruning_rounds,num_epochs):
-    model = torch.load(file_name)
+def get_unique_ids(directory, pattern=r'\d+'):
+    ids = set()
+    for filename in os.listdir(directory):
+        match = re.findall(pattern, filename)
+        if match:
+            ids.update(match)
+    return sorted(ids)
+
+
+def winning_tickets_helper(cfg, dataset, task_id, device):
+    print(f'task_id: {task_id}')
+    if cfg.general.dataset == 'mnist':
+        model = models.SimpleMLP()
+    else:
+        raise NotImplementedError
+    
+    model = model.to(device)
+
+    model.load_state_dict(torch.load(cfg.winning_tickets_masks.models_dir + f'snapshot_start_task{task_id}'))
+    perm = np.load(cfg.winning_tickets_masks.models_dir + f'permutation_task{task_id}.npy')
+    
+    perm_train = datasets.mnist.PermutedMNIST(dataset[0], perm)
+    perm_test = datasets.mnist.PermutedMNIST(dataset[1], perm)
+
+    train_loader = torch.utils.data.DataLoader(perm_train, batch_size=cfg.general.batch_size, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(perm_test, batch_size=cfg.general.batch_size, shuffle=False)
+
     masks = []
-    for ticket_id in range(num_tickets):
-        mask, _ = find_winning_ticket(model,target_percentage,pruning_rounds,num_epochs)
+    for ticket_id in range(cfg.winning_tickets_masks.num_tickets):
+        print(f"finding {ticket_id} winning ticket")
+        mask, _ = find_winning_ticket(cfg, model, train_loader, test_loader, device)
         masks.append(mask)
 
-    if pairwise:
+    if cfg.winning_tickets_masks.pairwise:
         overlaps = []
-        for i in range(num_tickets):
-            for j in range(i+1,num_tickets):
-                overlaps.append(compute_pairwise_overlap(masks[i],masks[j]))
+        for i in range(cfg.winning_tickets_masks.num_tickets):
+            for j in range(i+1, cfg.winning_tickets_masks.num_tickets):
+                overlaps.append(compute_pairwise_overlap(masks[i],masks[j]).cpu().item())
         overlaps = np.array(overlaps)
         avg_overlap, std_overlap = np.mean(overlaps), np.std(overlaps)
         return {'average pairwise overlap':avg_overlap, 'pairwise overlap std':std_overlap}

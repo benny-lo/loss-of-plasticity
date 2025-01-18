@@ -1,23 +1,39 @@
 import torch
 from tqdm import tqdm 
 
-
 def mask_out(model, mask):
-    for idx, param in enumerate(model.parameters()):
-        param = param * mask[idx]
+    idx = 0
+    for name, param in model.named_parameters():
+        if 'weight' in name:
+            param = param * mask[idx]
+            idx += 1
 
 def set_grad_zero(model, mask):
-    for idx, param in enumerate(model.parameters()):
-        param.grad = param.grad * mask[idx]
+    idx = 0
+    for name, param in model.named_parameters():
+        if 'weight' in name:
+            param.grad = param.grad * mask[idx]
+            idx += 1
 
-
-
-
-def train_model(model, train_loader, optimizer, criterion, device='cpu', num_epochs=10, mask = None):
+def train_model(cfg, model, train_loader, device, num_epochs, mask = None):
     model.train()
     running_loss = 0.0
     correct = 0
     total = 0
+
+    if cfg.general.optimizer == 'adam':
+        optimizer = torch.optim.Adam(model.parameters(), lr=cfg.general.lr)
+    
+    else:
+        raise NotImplementedError
+
+    
+    if cfg.general.criterion == 'cross entropy':
+        criterion = torch.nn.CrossEntropyLoss()
+
+    else:
+        raise NotImplementedError
+
             
     if mask:
         mask_out(model, mask)
@@ -51,11 +67,17 @@ def train_model(model, train_loader, optimizer, criterion, device='cpu', num_epo
     return avg_loss, accuracy
 
 
-def evaluate_model(model, test_loader, criterion, device, mask=None):
+def evaluate_model(cfg, model, test_loader, device, mask=None):
     model.eval()
     running_loss = 0.0
     correct = 0
     total = 0
+
+    if cfg.general.criterion == 'cross entropy':
+        criterion = torch.nn.CrossEntropyLoss()
+
+    else:
+        raise NotImplementedError
 
     with torch.no_grad():
         for images, labels in tqdm(test_loader, desc="Evaluating"):
@@ -74,19 +96,33 @@ def evaluate_model(model, test_loader, criterion, device, mask=None):
     avg_loss = running_loss / len(test_loader)
     return avg_loss, accuracy
 
-def train_model_gradient(model,train_loader, optimizer, criterion, device='cpu', num_epochs=10, mask = None):
+def train_model_gradient(cfg, model,train_loader, device='cpu', num_epochs=10, mask = None):
     model.train()
+
+
+    if cfg.general.optimizer == 'adam':
+        optimizer = torch.optim.Adam(model.parameters(), lr=cfg.general.lr)
     
+    else:
+        raise NotImplementedError
+
+    
+    if cfg.general.criterion == 'cross entropy':
+        criterion = torch.nn.CrossEntropyLoss()
+
+    else:
+        raise NotImplementedError
             
     if mask:
         mask_out(model, mask)
 
     grad = []
     for epoch in range(num_epochs):
-
-        
-        for param in model.parameters():
-            grad.append(torch.zeros_like(param))
+        idx = 0
+        for name, param in model.named_parameters():
+            if 'weight' in name:
+                grad.append(torch.zeros_like(param))
+                idx += 1
 
         for images, labels in tqdm(train_loader, desc="Training"):
             images, labels = images.to(device).to(torch.float), labels.to(device)
@@ -100,8 +136,11 @@ def train_model_gradient(model,train_loader, optimizer, criterion, device='cpu',
             if mask:
                 set_grad_zero(model,mask)
 
-            for i,param in enumerate(model.parameters()):
-                grad[i] += param.grad.abs()
+            idx = 0
+            for name, param in model.named_parameters():
+                if 'weight' in name:
+                    grad[idx] += param.grad.abs()
+                    idx += 1
             
             optimizer.step()
 

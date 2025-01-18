@@ -9,6 +9,7 @@ from overlap import compute_pairwise_overlap, compute_overlap
 from actual_lottery_tickets import find_winning_ticket
 import box
 
+
 def lop(cfg, dataset, device):
     if cfg.general.dataset == 'mnist':
         model = models.SimpleMLP()
@@ -30,7 +31,7 @@ def lop(cfg, dataset, device):
 
         if task_id % cfg.lop.save_freq == 0:
             np.save(file=save_folder + f'permutation_task{task_id}', arr=perm)
-            torch.save(model.state_dict, f'./results/lop/snapshot_start_task{task_id}')
+            torch.save(model.state_dict(), f'./results/lop/snapshot_start_task{task_id}')
 
         if cfg.general.dataset == 'mnist':
             perm_train = datasets.mnist.PermutedMNIST(train, perm)
@@ -49,7 +50,7 @@ def lop(cfg, dataset, device):
         task_performance["test_acc"].append(test_acc)
 
         if task_id % cfg.lop.save_freq == 0:
-            torch.save(model.state_dict, f'./results/lop/snapshot_end_task{task_id}')
+            torch.save(model.state_dict(), f'./results/lop/snapshot_end_task{task_id}')
 
         print(f"Task {task_id + 1} - Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}")
         print(f"Task {task_id + 1} - Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.4f}")
@@ -57,21 +58,14 @@ def lop(cfg, dataset, device):
     utils.pickle_obj(obj=task_performance, path='./results/lop/task_performance')
 
 
-def winning_tickets_masks(cfg):
+def winning_tickets_masks(cfg, dataset, device):
     models_dir = cfg.winning_tickets_masks.models_dir
-    num_tickets = cfg.winning_tickets_masks.num_tickets
-    pairwise = cfg.winning_tickets_masks.pairwise
-    target_percentage = cfg.winning_tickets_masks.target_percentage
-    pruning_rounds = cfg.winning_tickets_masks.pruning_rounds
-    num_epochs = cfg.general.num_epochs
 
-    checkpoints = [f for f in os.listdir(models_dir) if f.endswith(".pth")]
-
+    task_ids = utils.get_unique_ids(models_dir)
     stats_dict  = {}
 
-    for file_path in checkpoints:
-        file_name = os.path.basename(file_path, num_tickets, pairwise)
-        stats_dict[file_name] = utils.winning_tickets_helper(file_name,num_tickets,pairwise,target_percentage,pruning_rounds,num_epochs)
+    for task_id in task_ids:
+        stats_dict[task_id] = utils.winning_tickets_helper(cfg, dataset, task_id, device)
 
     utils.pickle_obj(obj=stats_dict, path='./results/winning_tickets_masks/stats_dict')
 
@@ -111,14 +105,14 @@ def main():
     cfg = utils.load_config()
     utils.seed_everything(cfg.general.seed)
 
-    print(cfg.lop.save_freq)
-
     if cfg.general.dataset == 'mnist':
         dataset = datasets.mnist.get_MNIST_dataset()
     else:
         raise NotImplementedError
 
-    lop(cfg=cfg, dataset=dataset, device=device)
+    #lop(cfg=cfg, dataset=dataset, device=device)
+
+    winning_tickets_masks(cfg=cfg, dataset=dataset,device=device)
     
 
 if __name__ == '__main__':
