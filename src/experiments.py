@@ -40,8 +40,8 @@ def lop(cfg, dataset, device):
         train_loader = torch.utils.data.DataLoader(perm_train, batch_size=cfg.general.batch_size, shuffle=True)
         test_loader = torch.utils.data.DataLoader(perm_test, batch_size=cfg.general.batch_size, shuffle=False)
 
-        train_loss, train_acc = training.train_model(model, train_loader, optimizer, criterion, device, num_epochs=cfg.general.num_epochs)
-        test_loss, test_acc = training.evaluate_model(model, test_loader, criterion, device)
+        train_loss, train_acc = training.train_model(cfg, model, train_loader, device, num_epochs=cfg.general.num_epochs)
+        test_loss, test_acc = training.evaluate_model(cfg, model, test_loader, device)
 
         # Log performance
         task_performance["train_loss"].append(train_loss)
@@ -110,9 +110,9 @@ def main():
     else:
         raise NotImplementedError
 
-    #lop(cfg=cfg, dataset=dataset, device=device)
+    lop(cfg=cfg, dataset=dataset, device=device)
 
-    winning_tickets_masks(cfg=cfg, dataset=dataset,device=device)
+    #winning_tickets_masks(cfg=cfg, dataset=dataset,device=device)
     
 
 if __name__ == '__main__':

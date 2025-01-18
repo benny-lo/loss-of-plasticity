@@ -9,7 +9,7 @@ general:
   criterion: 'cross entropy'
 
 lop:
-  num_tasks: 501
+  num_tasks: 1
   save_freq: 50
 
 winning_tickets_masks:
