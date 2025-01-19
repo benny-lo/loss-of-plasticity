@@ -42,7 +42,7 @@ def compute_pairwise_overlap(mask1, mask2):
     return overlap_percentage
 
 
-def compute_overlap(*masks):
+def compute_overlap(masks):
 
     assert all(len(mask) == len(masks[0]) for mask in masks), "All masks must have the same length."
 
