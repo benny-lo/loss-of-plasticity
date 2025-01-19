@@ -73,14 +73,7 @@ def get_unique_ids(directory, pattern=r'\d+'):
 
 def winning_tickets_helper(cfg, dataset, task_id, device):
     print(f'task_id: {task_id}')
-    if cfg.general.dataset == 'mnist':
-        model = models.SimpleMLP()
-    else:
-        raise NotImplementedError
     
-    model = model.to(device)
-
-    model.load_state_dict(torch.load(cfg.winning_tickets_masks.models_dir + f'snapshot_start_task{task_id}'))
     perm = np.load(cfg.winning_tickets_masks.models_dir + f'permutation_task{task_id}.npy')
     
     perm_train = datasets.mnist.PermutedMNIST(dataset[0], perm)
@@ -91,6 +84,14 @@ def winning_tickets_helper(cfg, dataset, task_id, device):
 
     masks = []
     for ticket_id in range(cfg.winning_tickets_masks.num_tickets):
+        if cfg.general.dataset == 'mnist':
+            model = models.SimpleMLP()
+        else:
+            raise NotImplementedError
+    
+        model = model.to(device)
+        model.load_state_dict(torch.load(cfg.winning_tickets_masks.models_dir + f'snapshot_start_task{task_id}', weights_only=True))
+        
         print(f"finding {ticket_id} winning ticket")
         mask, _ = find_winning_ticket(cfg, model, train_loader, test_loader, device)
         masks.append(mask)

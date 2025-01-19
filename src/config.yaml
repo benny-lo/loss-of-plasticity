@@ -2,14 +2,14 @@ general:
   id: 1
   seed: 42
   dataset: 'mnist'
-  num_epochs: 1
+  num_epochs: 10
   batch_size: 32
   lr: 0.001
   optimizer: 'adam'
   criterion: 'cross entropy'
 
 lop:
-  num_tasks: 1
+  num_tasks: 501
   save_freq: 50
 
 winning_tickets_masks:

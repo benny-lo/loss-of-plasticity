@@ -45,17 +45,18 @@ def find_winning_ticket(cfg, model, data_loader, test_loader, device):
 
     pruning_per_round = cfg.winning_tickets_masks.target_percentage ** (1 / cfg.winning_tickets_masks.pruning_rounds)
 
-    accuracies = np.zeros(cfg.winning_tickets_masks.pruning_rounds)
+    accuracies = np.zeros(cfg.winning_tickets_masks.pruning_rounds + 1)
 
     mask = initialize_mask(model)
 
     for r in range(cfg.winning_tickets_masks.pruning_rounds):
-        pruning(model,mask,pruning_per_round)
         model.load_state_dict(initial_params)
         
-        training.train_model(cfg, model, data_loader, device, cfg.general.num_epochs,mask=mask)
-
+        training.train_model(cfg, model, data_loader, device, cfg.general.num_epochs,mask=mask)        
         accuracies[r] = training.evaluate_model(cfg, model, test_loader, device, mask=mask)[1]
 
+        pruning(model, mask, pruning_per_round)
+
+    accuracies[cfg.winning_tickets_masks.pruning_rounds] = training.evaluate_model(cfg, model, test_loader, device, mask=mask)[1]
     
     return mask, accuracies

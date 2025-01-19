@@ -110,9 +110,9 @@ def main():
     else:
         raise NotImplementedError
 
-    lop(cfg=cfg, dataset=dataset, device=device)
+    #lop(cfg=cfg, dataset=dataset, device=device)
 
-    #winning_tickets_masks(cfg=cfg, dataset=dataset,device=device)
+    winning_tickets_masks(cfg=cfg, dataset=dataset,device=device)
     
 
 if __name__ == '__main__':
