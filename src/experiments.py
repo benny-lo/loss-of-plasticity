@@ -71,7 +71,7 @@ def winning_tickets_masks(cfg, dataset, device):
 
 
 
-def parameter_plasticity(cfg,model,dataset,device):
+def parameter_plasticity(cfg,model,model_name,dataset,device):
     train = dataset[0]
 
     model = model.to(device)
@@ -96,7 +96,7 @@ def parameter_plasticity(cfg,model,dataset,device):
 
     gradients_stats = utils.aggregate_gradient_stats(gradients)
 
-    utils.pickle_obj(obj=gradients_stats, path='./results/parameter_plasticity/gradients_stats')
+    utils.pickle_obj(obj=gradients_stats, path='./results/parameter_plasticity/gradients_stats_{model_name}')
 
 
 
@@ -109,7 +109,9 @@ def main():
         dataset = datasets.mnist.get_MNIST_dataset()
     else:
         raise NotImplementedError
+    
 
+    
     #lop(cfg=cfg, dataset=dataset, device=device)
 
     winning_tickets_masks(cfg=cfg, dataset=dataset,device=device)
