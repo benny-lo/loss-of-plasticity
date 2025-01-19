@@ -53,8 +53,8 @@ def get_MNIST_dataset():
         transforms.Normalize((mnist_mean, ), (mnist_std, )),
     ])
 
-    mnist_train = datasets.MNIST(root='../data', train=True, download=False, transform=mnist_transform)
-    mnist_test = datasets.MNIST(root='../data', train=False, download=False, transform=mnist_transform)
+    mnist_train = datasets.MNIST(root='../data', train=True, download=True, transform=mnist_transform)
+    mnist_test = datasets.MNIST(root='../data', train=False, download=True, transform=mnist_transform)
     return mnist_train, mnist_test
 
 

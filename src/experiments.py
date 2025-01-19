@@ -67,7 +67,7 @@ def winning_tickets_masks(cfg, dataset, device):
     for task_id in task_ids:
         stats_dict[task_id] = utils.winning_tickets_helper(cfg, dataset, task_id, device)
 
-    utils.pickle_obj(obj=stats_dict, path='./results/winning_tickets_masks/stats_dict')
+    utils.pickle_obj(obj=stats_dict, path=f'./results/winning_tickets_masks/pairwise_{cfg.winning_tickets_masks.pairwise}_target_percentage_{cfg.winning_tickets_masks.target_percentage}_pruning_rounds_{cfg.winning_tickets_masks.pruning_rounds}')
 
 
 
