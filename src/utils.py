@@ -65,6 +65,8 @@ def plot_results(task_performance,smoothing=True,window=11):
 def get_unique_ids(directory, pattern=r'\d+'):
     ids = set()
     for filename in os.listdir(directory):
+        if not filename.startswith('snapshot'): 
+            continue
         match = re.findall(pattern, filename)
         if match:
             ids.update(match)

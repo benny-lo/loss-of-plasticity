@@ -143,7 +143,7 @@ def train_model_gradient(cfg, model,train_loader, device='cpu', num_epochs=10, m
                     idx += 1
             
             optimizer.step()
-
-    grad /= (num_epochs * len(train_loader))
+    
+    grad = [x / (num_epochs * len(train_loader)) for x in grad]
 
     return grad

@@ -28,8 +28,10 @@ def main():
     models_dir = cfg.winning_tickets_masks.models_dir
 
     task_ids = utils.get_unique_ids(models_dir)
+    task_ids = [int(x) for x in task_ids]
 
     for task_id in task_ids:
+        print(f"\nTask {task_id + 1}")
         if cfg.general.dataset == 'mnist':
             model = models.SimpleMLP()
         else:

@@ -15,13 +15,15 @@ def lop(cfg, dataset, device):
         model = models.SimpleMLP()
         permutations = [np.random.permutation(28 * 28) for _ in range(cfg.lop.num_tasks)]
 
+    for task_id, perm in enumerate(permutations):
+        np.save(cfg.lop.save_folder + f'permutation_task{task_id}', arr=perm)
+
+    raise NotImplementedError
+
     train = dataset[0]
     test = dataset[1]
 
     model = model.to(device)
-
-    optimizer = torch.optim.Adam(model.parameters(), lr=cfg.general.lr)
-    criterion = torch.nn.CrossEntropyLoss()
 
     task_performance = {"train_loss": [], "train_acc": [], "test_loss": [], "test_acc": []}
     save_folder = './results/lop/'
@@ -76,27 +78,16 @@ def parameter_plasticity(cfg,model,model_name,dataset,device):
 
     model = model.to(device)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=cfg.general.lr)
-    criterion = torch.nn.CrossEntropyLoss()
-
-    permutations = [np.random.permutation(28 * 28) for _ in range(cfg.lop.num_tasks)]
-
     gradients = []
-    for task_id, perm in enumerate(permutations):
-        print(f"\nTask {task_id + 1}/{len(permutations)}")
+    
+    train_loader = torch.utils.data.DataLoader(train, batch_size=cfg.general.batch_size, shuffle=True)
 
-
-        if cfg.general.dataset == 'mnist':
-            perm_train = datasets.mnist.PermutedMNIST(train, perm)
-        
-        train_loader = torch.utils.data.DataLoader(perm_train, batch_size=cfg.general.batch_size, shuffle=True)
-
-        gradient = training.train_model_gradient(model, train_loader, optimizer, criterion, device, num_epochs=cfg.general.num_epochs)
-        gradients.append(gradient)
+    gradient = training.train_model_gradient(cfg, model, train_loader, device, num_epochs=cfg.general.num_epochs)
+    gradients.append(gradient)
 
     gradients_stats = utils.aggregate_gradient_stats(gradients)
 
-    utils.pickle_obj(obj=gradients_stats, path='./results/parameter_plasticity/gradients_stats_{model_name}')
+    utils.pickle_obj(obj=gradients_stats, path=f'./results/parameter_plasticity/gradients_stats_{model_name}')
 
 
 
@@ -112,9 +103,9 @@ def main():
     
 
     
-    #lop(cfg=cfg, dataset=dataset, device=device)
+    lop(cfg=cfg, dataset=dataset, device=device)
 
-    winning_tickets_masks(cfg=cfg, dataset=dataset,device=device)
+    #winning_tickets_masks(cfg=cfg, dataset=dataset,device=device)
     
 
 if __name__ == '__main__':
