@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#SBATCH --account=dl_jobs
-#SBATCH --job-name=winning_tickets_masks        
-#SBATCH --output=out.txt    
-#SBATCH --error=error.txt     
-#SBATCH --time=2-10:00:00               
+#SBATCH --account=dl
+#SBATCH --job-name=winning_tickets_masks_2       
+#SBATCH --output=out2.txt    
+#SBATCH --error=error2.txt     
+#SBATCH --time=1-00:00:00               
 
 
 

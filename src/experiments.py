@@ -61,6 +61,7 @@ def lop(cfg, dataset, device):
 
 
 def winning_tickets_masks(cfg, dataset, device):
+    print(device)
     models_dir = cfg.winning_tickets_masks.models_dir
 
     task_ids = utils.get_unique_ids(models_dir)

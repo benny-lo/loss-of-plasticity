@@ -2,7 +2,7 @@ general:
   id: 1
   seed: 42
   dataset: mnist
-  num_epochs: 1
+  num_epochs: 10
   batch_size: 32
   lr: 0.001
   optimizer: adam
@@ -12,7 +12,10 @@ lop:
   save_freq: 50
 winning_tickets_masks:
   models_dir: ./results/lop/10epochs/
-  num_tickets: 1
+  num_tickets: 10
   pairwise: true
   target_percentage: 0.2
-  pruning_rounds: 1
+  pruning_rounds: 3
+overlap_parameters_tickets:
+  masks_dir: ''
+  gradients_dir: ''
