@@ -10,31 +10,31 @@ from actual_lottery_tickets import find_winning_ticket
 import box
 
 from experiments import parameter_plasticity
-
+import pickle
 
 def overlap_parameters_tickets(cfg):
     masks_dir = cfg.masks_dir
     gradients_dir = cfg.gradients_dir
 
-    
-    # i assume here i take a single mask and grad
+    task_ids = utils.get_unique_ids(masks_dir)
+    for task_id in task_ids:
+        mask = pickle.load(masks_dir + 'masks_task_{task_id}_target_percentage_{target_percentage}_pruning_rounds_{pruning_rounds}')
+        grad = ...
 
-    mask = ...  
-    grad = ...
-    ones_percentage = utils.percentage_of_ones(mask)
+        ones_percentage = utils.percentage_of_ones(mask)
 
-    torch_grad = torch.cat(grad)
-    threshold = torch.quantile(torch_grad,1-ones_percentage)
+        torch_grad = torch.cat(grad)
+        threshold = torch.quantile(torch_grad,1-ones_percentage)
 
-    grad_mask = []
+        grad_mask = []
 
-    for param_grad in grad:
-        grad_mask.append(torch.ones_like(param_grad))
+        for param_grad in grad:
+            grad_mask.append(torch.ones_like(param_grad))
 
-        grad_mask[-1][param_grad.abs() < threshold] = 0
+            grad_mask[-1][param_grad.abs() < threshold] = 0
 
-    ticket_parameters_overlap = utils.compute_pairwise_overlap(mask,grad_mask)
-    print(f"overlap between ticket and most important parameters : {ticket_parameters_overlap}")
+        ticket_parameters_overlap = utils.compute_pairwise_overlap(mask,grad_mask)
+        print(f"overlap between ticket and most important parameters : {ticket_parameters_overlap}")
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

@@ -78,15 +78,12 @@ def parameter_plasticity(cfg,model,model_name,dataset,device):
     train = dataset[0]
 
     model = model.to(device)
-
-    gradients = []
     
     train_loader = torch.utils.data.DataLoader(train, batch_size=cfg.general.batch_size, shuffle=True)
 
     gradient = training.train_model_gradient(cfg, model, train_loader, device, num_epochs=cfg.general.num_epochs)
-    gradients.append(gradient)
 
-    gradients_stats = utils.aggregate_gradient_stats(gradients)
+    gradients_stats = utils.aggregate_gradient_stats([gradient])
 
     utils.pickle_obj(obj=gradients_stats, path=f'./results/parameter_plasticity/gradients_stats_{model_name}')
 
@@ -104,9 +101,9 @@ def main():
     
 
     
-    lop(cfg=cfg, dataset=dataset, device=device)
+    #lop(cfg=cfg, dataset=dataset, device=device)
 
-    #winning_tickets_masks(cfg=cfg, dataset=dataset,device=device)
+    winning_tickets_masks(cfg=cfg, dataset=dataset,device=device)
     
 
 if __name__ == '__main__':

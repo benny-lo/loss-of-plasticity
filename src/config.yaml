@@ -17,5 +17,5 @@ winning_tickets_masks:
   target_percentage: 0.2
   pruning_rounds: 3
 overlap_parameters_tickets:
-  masks_dir: ''
+  masks_dir: ./results/winning_tickets_masks/masks/
   gradients_dir: ''

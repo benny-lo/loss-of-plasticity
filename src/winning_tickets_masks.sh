@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --account=dl
+#SBATCH --account=dl_jobs
 #SBATCH --job-name=winning_tickets_masks_2       
 #SBATCH --output=out2.txt    
 #SBATCH --error=error2.txt     
