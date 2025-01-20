@@ -1,12 +1,10 @@
 #!/bin/bash
 
-#SBATCH --account=dl
+#SBATCH --account=dl_cpu
 #SBATCH --job-name=parameter_plasticity       
 #SBATCH --output=plasticity_out.txt    
 #SBATCH --error=plasticity_error.txt     
-#SBATCH --time=2:00:00               
+#SBATCH --time=1-00:00:00               
 
-conda init
-conda activate lop_env
 
 python src/parameter_plasticity.py

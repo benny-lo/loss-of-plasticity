@@ -14,8 +14,10 @@ winning_tickets_masks:
   models_dir: ./results/lop/10epochs/
   num_tickets: 10
   pairwise: true
-  target_percentage: 0.2
-  pruning_rounds: 3
+  target_percentage: 0.05
+  pruning_rounds: 10
 overlap_parameters_tickets:
-  masks_dir: ./results/winning_tickets_masks/masks/
-  gradients_dir: ''
+  masks_dir: ./results/winning_tickets_masks/new_masks/
+  gradients_dir: ./results/parameter_plasticity/
+  mask_selection_criterion: 'first'
+  save_dir: ./results/overlap_parameters_tickets/

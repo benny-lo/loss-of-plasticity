@@ -117,13 +117,12 @@ def train_model_gradient(cfg, model,train_loader, device='cpu', num_epochs=10, m
         mask_out(model, mask)
 
     grad = []
-    for epoch in range(num_epochs):
-        idx = 0
-        for name, param in model.named_parameters():
-            if 'weight' in name:
-                grad.append(torch.zeros_like(param))
-                idx += 1
 
+    for name, param in model.named_parameters():
+        if 'weight' in name:
+            grad.append(torch.zeros_like(param))
+
+    for epoch in range(num_epochs):
         for images, labels in tqdm(train_loader, desc="Training"):
             images, labels = images.to(device).to(torch.float), labels.to(device)
 
