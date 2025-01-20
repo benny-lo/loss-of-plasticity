@@ -12,6 +12,29 @@ import box
 from experiments import parameter_plasticity
 
 
+def overlap_parameters_tickets(cfg):
+    masks_dir = cfg.masks_dir
+    gradients_dir = cfg.gradients_dir
+
+    
+    # i assume here i take a single mask and grad
+
+    mask = ...  
+    grad = ...
+    ones_percentage = utils.percentage_of_ones(mask)
+
+    torch_grad = torch.cat(grad)
+    threshold = torch.quantile(torch_grad,1-ones_percentage)
+
+    grad_mask = []
+
+    for param_grad in grad:
+        grad_mask.append(torch.ones_like(param_grad))
+
+        grad_mask[-1][param_grad.abs() < threshold] = 0
+
+    ticket_parameters_overlap = utils.compute_pairwise_overlap(mask,grad_mask)
+    print(f"overlap between ticket and most important parameters : {ticket_parameters_overlap}")
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

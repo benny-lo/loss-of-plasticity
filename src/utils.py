@@ -127,6 +127,10 @@ def aggregate_gradient_stats(gradients):
     return stats_dict
         
 
+def percentage_of_ones(mask: list):
+    total_elements = sum(t.numel() for t in mask)
+    total_ones = sum(t.sum() for t in mask)
 
+    return total_ones / total_elements
 
 

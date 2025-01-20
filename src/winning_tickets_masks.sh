@@ -4,7 +4,7 @@
 #SBATCH --job-name=winning_tickets_masks_2       
 #SBATCH --output=out2.txt    
 #SBATCH --error=error2.txt     
-#SBATCH --time=1-00:00:00               
+#SBATCH --time=0-12:00:00              
 
 
 
