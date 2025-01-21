@@ -19,5 +19,5 @@ winning_tickets_masks:
 overlap_parameters_tickets:
   masks_dir: ./results/winning_tickets_masks/new_masks/
   gradients_dir: ./results/parameter_plasticity/
-  mask_selection_criterion: 'first'
-  save_dir: ./results/overlap_parameters_tickets/
+  mask_selection_criterion: 'union'
+  save_dir: ./results/overlap_parameters_tickets/union/

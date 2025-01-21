@@ -30,9 +30,10 @@ def mask_selection(cfg,masks):
 
         for mask in masks[1:]:
             if criterion == 'intersection':
-                param_aggregation = param_aggregation & mask[i]
+                param_aggregation = param_aggregation.to(torch.int32) & mask[i].to(torch.int32)
             if criterion == 'union':
-                param_aggregation = param_aggregation | mask[i]
+                param_aggregation = param_aggregation.to(torch.int32) | mask[i].to(torch.int32)
+                
             if criterion == 'average':
                 raise NotImplementedError         
 
@@ -42,23 +43,25 @@ def mask_selection(cfg,masks):
 
 
 def overlap_parameters_tickets(cfg):
-    stats_dict = {}
+    
     masks_dir = cfg.overlap_parameters_tickets.masks_dir
     gradients_dir = cfg.overlap_parameters_tickets.gradients_dir
 
-    task_ids = utils.get_unique_ids(masks_dir)
-    for task_id in task_ids:
-        target_percentage_values = [0.2,0.1,0.05]
-        pruning_rounds_values = [3,5,10]
+    for idx in range(3):
+        stats_dict = {}
+        target_percentage = target_percentage_values[idx]
+        pruning_rounds = pruning_rounds_values[idx]
 
-        for idx in range(3):
-            target_percentage = target_percentage_values[idx]
-            pruning_rounds = pruning_rounds_values[idx]
+        #task_ids = utils.get_unique_ids(masks_dir)
+        task_ids = range(0,550,50)
+        for task_id in task_ids:
+            target_percentage_values = [0.2,0.1,0.05]
+            pruning_rounds_values = [3,5,10]
 
             logging.info(f"running mask {task_id} with params {target_percentage} {pruning_rounds}")
 
             mask_file = open(masks_dir + f'masks_task_{task_id}_target_percentage_{target_percentage}_pruning_rounds_{pruning_rounds}','rb')
-            masks = torch.load(mask_file)
+            masks = torch.load(mask_file, weights_only=True)
             mask = mask_selection(cfg,masks)
             grad_file = open(gradients_dir + f'gradients_stats_snapshot_start_task{task_id}','rb')
             grad = pickle.load(grad_file)['avg_grad']
@@ -79,8 +82,8 @@ def overlap_parameters_tickets(cfg):
 
             ticket_parameters_overlap = utils.compute_pairwise_overlap(mask,grad_mask)
             stats_dict[task_id]= ticket_parameters_overlap
-            logging.info(f"overlap between ticket and most important parameters : {ticket_parameters_overlap}")
-            utils.pickle_obj(stats_dict,cfg.overlap_parameters_tickets.save_dir + f'overlap_parameters_tickets_{task_id}_target_percentage_{target_percentage}_pruning_rounds_{pruning_rounds}' )
+            logging.info(f"overlap between ticket and most important parameters : {ticket_parameters_overlap} for task id {task_id}")
+        utils.pickle_obj(stats_dict,cfg.overlap_parameters_tickets.save_dir + f'overlap_parameters_tickets_target_percentage_{target_percentage}_pruning_rounds_{pruning_rounds}' )
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
