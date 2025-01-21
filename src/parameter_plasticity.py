@@ -46,6 +46,9 @@ def overlap_parameters_tickets(cfg):
     
     masks_dir = cfg.overlap_parameters_tickets.masks_dir
     gradients_dir = cfg.overlap_parameters_tickets.gradients_dir
+    target_percentage_values = [0.2,0.1,0.05]
+    pruning_rounds_values = [3,5,10]
+
 
     for idx in range(3):
         stats_dict = {}
@@ -55,9 +58,6 @@ def overlap_parameters_tickets(cfg):
         #task_ids = utils.get_unique_ids(masks_dir)
         task_ids = range(0,550,50)
         for task_id in task_ids:
-            target_percentage_values = [0.2,0.1,0.05]
-            pruning_rounds_values = [3,5,10]
-
             logging.info(f"running mask {task_id} with params {target_percentage} {pruning_rounds}")
 
             mask_file = open(masks_dir + f'masks_task_{task_id}_target_percentage_{target_percentage}_pruning_rounds_{pruning_rounds}','rb')
