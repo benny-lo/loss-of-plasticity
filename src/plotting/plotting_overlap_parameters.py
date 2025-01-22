@@ -30,7 +30,6 @@ def plot_data(all_data, save_path):
     plt.title('Parameter Overlap Across Versions', fontsize=16)
     plt.legend(fontsize=12, loc='best')
     plt.grid(False)
-    plt.gca().set_facecolor('#f9f9f9')
     plt.tight_layout()
     save_plot(plt.gcf(), save_path)
 

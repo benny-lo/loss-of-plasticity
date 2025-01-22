@@ -27,5 +27,8 @@ mask_accuracy_files:
   output_file_path: "mask_accuracy_data"
   plot_output_dir: "mask_accuracy_plot.png"
 
+win_tick_task_performance_file_path: "task_performance_lottery_ticket"
+win_tick_LOP_plot_out: "LOPofWinTick.png"
+
   
 
