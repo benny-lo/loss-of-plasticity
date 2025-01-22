@@ -16,6 +16,7 @@ This research was conducted as part of the ETH Zürich *Deep Learning 2024-2025*
 ```
 ├── README.md
 ├── requirements.txt
+├── results
 ├── src
 │   ├── datasets
 │   │   ├── _init_.py
