@@ -7,17 +7,27 @@ general:
   lr: 0.001
   optimizer: adam
   criterion: cross entropy
-lop:
-  num_tasks: 501
+lop_experiment:
+  num_tasks: 500
   save_freq: 50
+  save_folder: ./results/lop_experiment/new_run/
+  model_name: ticket_task_0
+  winning_ticket_evaluating: true
 winning_tickets_masks:
-  models_dir: ./results/lop/10epochs/
+  models_dir: ./results/lop_experiment/10epochs/
   num_tickets: 10
   pairwise: true
-  target_percentage: 0.05
-  pruning_rounds: 10
+  target_percentage: 0.5
+  pruning_rounds: 5
 overlap_parameters_tickets:
   masks_dir: ./results/winning_tickets_masks/new_masks/
   gradients_dir: ./results/parameter_plasticity/
-  mask_selection_criterion: 'union'
-  save_dir: ./results/overlap_parameters_tickets/union/
+  mask_selection_criterion: first
+  save_dir: ./results/overlap_parameters_tickets/first/
+winning_tickets_plasticity:
+  models_dir: ./results/lop_experiment/10epochs/
+  masks_dir: ./results/winning_tickets_masks/masks/
+  target_percentage: 0.05
+  pruning_rounds: 10
+  num_tasks: 500
+  save_folder: ./results/winning_tickets_plasticity/

@@ -60,7 +60,7 @@ def get_MNIST_dataset():
 
 def main():
     #model = SimpleMLP()
-    #lop_experiment1(model)
+    #lop_experiment_experiment1(model)
     train_data, test_data = get_MNIST_dataset()
 
 if __name__ == "__main__":

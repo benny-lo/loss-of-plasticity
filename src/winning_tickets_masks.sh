@@ -4,15 +4,15 @@
 #SBATCH --job-name=winning_tickets_masks_2       
 #SBATCH --output=out2.txt    
 #SBATCH --error=error2.txt     
-#SBATCH --time=0-12:00:00              
+#SBATCH --time=1-00:00:00              
 
 
 
 conda init
-conda activate lop_env
+conda activate lop_experiment_env
 
-target_percentage_values=(0.2 0.1 0.05)  
-pruning_rounds_values=(3 5 10)  
+target_percentage_values=(0.5 0.6 0.7)  
+pruning_rounds_values=(5 7 10)  
 
 for i in "${!target_percentage_values[@]}"; do
   target_percentage="${target_percentage_values[$i]}"

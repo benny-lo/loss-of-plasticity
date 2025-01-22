@@ -58,5 +58,5 @@ def find_winning_ticket(cfg, model, data_loader, test_loader, device):
         pruning(model, mask, pruning_per_round)
 
     accuracies[cfg.winning_tickets_masks.pruning_rounds] = training.evaluate_model(cfg, model, test_loader, device, mask=mask)[1]
-    
-    return mask, accuracies
+
+    return [x.to('cpu') for x in mask], accuracies
