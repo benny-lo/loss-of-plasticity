@@ -115,7 +115,6 @@ def plot_differenced_overlap_and_accuracy(tasks, avg_overlap_dict, test_acc, win
     
     plt.show()
 
-    # Save the correlation results to CSV if the path is provided
     if correlation_csv_path:
         with open(correlation_csv_path, mode='w', newline='') as file:
             writer = csv.writer(file)
@@ -182,12 +181,10 @@ def process_and_plot_data(config):
             save_path=config["smoothed_test_accuracy_plot_path"]
         )
 def main():
-    # Load configuration from the YAML file
-    config_path = "plot_config.yaml"  # Assuming the config file is named 'config.yaml'
+    config_path = "plot_config.yaml"  
     with open(config_path, "r") as config_file:
         config = yaml.safe_load(config_file)
 
-    # Call the data processing and plotting function with the loaded config
     process_and_plot_data(config)
 
 if __name__ == "__main__":

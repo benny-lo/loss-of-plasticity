@@ -7,12 +7,10 @@ import scienceplots  # Import the scienceplots for publication quality
 plt.style.use(['science', 'ieee'])
 
 def load_config(config_path):
-    """Load YAML configuration."""
     with open(config_path, 'r') as file:
         return yaml.safe_load(file)
 
 def process_data(data_dict):
-    """Process data to extract tasks and mean accuracies."""
     tasks = []
     mean_accuracies = []
     for task, values in data_dict.items():
