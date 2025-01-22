@@ -23,3 +23,11 @@ def generate_pruned_string(name):
         y, x = match.groups()
         return f"Prun. Perc.: {y}, Rds.: {x}"
     return None
+
+def get_test_accuracies_at_tasks(task_performance, tasks):
+    test_acc = task_performance.get("test_acc", [])
+    test_acc_at_tasks = [
+        test_acc[task - 1] if task - 1 < len(test_acc) else 0.0
+        for task in tasks
+    ]
+    return test_acc_at_tasks

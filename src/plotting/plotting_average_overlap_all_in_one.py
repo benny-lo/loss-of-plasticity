@@ -5,10 +5,8 @@ import re
 import numpy as np
 import yaml
 import csv
-from plot_util import extract_pickle_from_zip, save_plot, generate_pruned_string
+from plot_util import extract_pickle_from_zip, save_plot, generate_pruned_string, get_test_accuracies_at_tasks
 
-import scienceplots  # Import the scienceplots for publication quality
-plt.style.use(['science', 'ieee'])
 
 def compute_differences(data):
     return np.diff(data)
@@ -47,13 +45,6 @@ def moving_variance(signal, window_size):
     ]
     return np.array(smoothed_variance)
 
-def get_test_accuracies_at_tasks(task_performance, tasks):
-    test_acc = task_performance.get("test_acc", [])
-    test_acc_at_tasks = [
-        test_acc[task - 1] if task - 1 < len(test_acc) else 0.0
-        for task in tasks
-    ]
-    return test_acc_at_tasks
 
 
 def plot_overlap_and_accuracy(tasks, avg_overlap_dict, test_acc, window_size, save_path=None):

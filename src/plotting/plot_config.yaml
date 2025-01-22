@@ -1,20 +1,30 @@
-correlation_save_path: correlation.csv
-differenced_plot_path: differenced_overlap_accuracy_plot.png
+correlation_save_path: "correlation.csv"
+differenced_plot_path: "differenced_overlap_accuracy_plot.png"
 grad_files_in_zip:
-- overlap_parameters_tickets/union/overlap_parameters_tickets_target_percentage_0.05_pruning_rounds_10
-- overlap_parameters_tickets/union/overlap_parameters_tickets_target_percentage_0.1_pruning_rounds_5
-- overlap_parameters_tickets/union/overlap_parameters_tickets_target_percentage_0.2_pruning_rounds_3
-imp_plot_path: importance_overlap_plot
-last_saved_plot: importance_overlap_plot
-output_file_path: extracted_contents.pkl
-overlap_accuracy_plot_path: overlap_accuracy_plot.png
-results_zip_path: results.zip
-smoothed_test_accuracy_plot_path: smoothed_test_accuracy_plot.png
-task_performance_file: results/lop/10epochs/task_performance
-window_size: 5
+  - "overlap_parameters_tickets/union/overlap_parameters_tickets_target_percentage_0.05_pruning_rounds_10"
+  - "overlap_parameters_tickets/union/overlap_parameters_tickets_target_percentage_0.1_pruning_rounds_5"
+  - "overlap_parameters_tickets/union/overlap_parameters_tickets_target_percentage_0.2_pruning_rounds_3"
+imp_plot_path: "importance_overlap_plot.png"
+last_saved_plot: "importance_overlap_plot"
+output_file_path: "extracted_contents.pkl"
+overlap_accuracy_plot_path: "overlap_accuracy_plot.png"
+results_zip_path: "results.zip"
+smoothed_test_accuracy_plot_path: "smoothed_test_accuracy_plot.png"
+task_performance_file: "results/lop/10epochs/task_performance"
+window_size: 1
 winning_tickets_overlap_files:
-- results/winning_tickets_masks/target_percentage_0.05_pruning_rounds_10
-- results/winning_tickets_masks/target_percentage_0.1_pruning_rounds_5
-- results/winning_tickets_masks/target_percentage_0.2_pruning_rounds_3
-zip_file_path: results.zip
-zip_file_plasticity_exp_path: overlap_parameters_tickets.zip
+  - "results/winning_tickets_masks/target_percentage_0.05_pruning_rounds_10"
+  - "results/winning_tickets_masks/target_percentage_0.1_pruning_rounds_5"
+  - "results/winning_tickets_masks/target_percentage_0.2_pruning_rounds_3"
+zip_file_path: "results.zip"
+zip_file_plasticity_exp_path: "overlap_parameters_tickets.zip"
+
+mask_accuracy_files:
+  zip_file_path: "data_accuracies.zip"
+  random_masks_pickle: "test_random_masks/tickets_performance"
+  winning_tickets_pickle: "winning_tickets_accuracy/tickets_performance"
+  output_file_path: "mask_accuracy_data"
+  plot_output_dir: "mask_accuracy_plot.png"
+
+  
+

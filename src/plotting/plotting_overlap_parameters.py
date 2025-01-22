@@ -39,7 +39,6 @@ def plot_data(all_data, save_path):
 
     # Save the plot
     save_plot(plt.gcf(), save_path)
-    print(f"Plot saved to {save_path}")
 
 
 def main():
