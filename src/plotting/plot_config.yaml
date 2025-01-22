@@ -1,6 +1,6 @@
 correlation_save_path: "correlation.csv"
 differenced_plot_path: "differenced_overlap_accuracy_plot.png"
-grad_files_in_zip:
+grad_files_in_zip: #Location of the overlap of the data containing the overlap of the masks found by IMP with the masks found by looking at gradient
   - "overlap_parameters_tickets/union/overlap_parameters_tickets_target_percentage_0.05_pruning_rounds_10"
   - "overlap_parameters_tickets/union/overlap_parameters_tickets_target_percentage_0.1_pruning_rounds_5"
   - "overlap_parameters_tickets/union/overlap_parameters_tickets_target_percentage_0.2_pruning_rounds_3"
@@ -8,17 +8,18 @@ imp_plot_path: "importance_overlap_plot.png"
 last_saved_plot: "importance_overlap_plot"
 output_file_path: "extracted_contents.pkl"
 overlap_accuracy_plot_path: "overlap_accuracy_plot.png"
-results_zip_path: "results.zip"
+results_zip_path: "results.zip" #ZIP file containing test accuracies
 smoothed_test_accuracy_plot_path: "smoothed_test_accuracy_plot.png"
-task_performance_file: "results/lop/10epochs/task_performance"
-window_size: 1
-winning_tickets_overlap_files:
+task_performance_file: "results/lop/10epochs/task_performance" #File containing test accuracies 
+window_size: 20 #Window applied when smoothing of test accuracies
+winning_tickets_overlap_files: #Location of the files containing the overlap of the different winning tickets found by IMP
   - "results/winning_tickets_masks/target_percentage_0.05_pruning_rounds_10"
   - "results/winning_tickets_masks/target_percentage_0.1_pruning_rounds_5"
   - "results/winning_tickets_masks/target_percentage_0.2_pruning_rounds_3"
-zip_file_path: "results.zip"
-zip_file_plasticity_exp_path: "overlap_parameters_tickets.zip"
+zip_file_path: "results.zip"  #ZIP file containing winning_tickets_overlap_files
+zip_file_plasticity_exp_path: "overlap_parameters_tickets.zip" #ZIP file containing grad_files_in_zip.
 
+#Files containing accuracies of random masks and winning ticket masks
 mask_accuracy_files:
   zip_file_path: "data_accuracies.zip"
   random_masks_pickle: "test_random_masks/tickets_performance"

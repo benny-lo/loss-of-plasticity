@@ -48,6 +48,7 @@ def moving_variance(signal, window_size):
 
 
 def plot_overlap_and_accuracy(tasks, avg_overlap_dict, test_acc, window_size, save_path=None):
+    #Plots the average overlap of the masks found by IMP and then plots them, plots also the test accuracy of the full network
     smoothed_acc = moving_average(test_acc, window_size)
     fig, ax1 = plt.subplots(figsize=(8, 6))
 
@@ -76,10 +77,11 @@ def plot_overlap_and_accuracy(tasks, avg_overlap_dict, test_acc, window_size, sa
     plt.show()
 
 def plot_differenced_overlap_and_accuracy(tasks, avg_overlap_dict, test_acc, window_size, save_path=None, correlation_csv_path=None):
+    #As time series with trend allows for highly spurious correlations, we also consider the differenced time series
     diff_test_acc = compute_differences(test_acc)
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(8, 6))
 
-    correlations = []  # To store the correlations and their labels
+    correlations = []  
 
     for label, avg_overlap in avg_overlap_dict.items():
         diff_overlap = compute_differences(avg_overlap)
@@ -90,7 +92,6 @@ def plot_differenced_overlap_and_accuracy(tasks, avg_overlap_dict, test_acc, win
         print(f"Pearson Correlation between {label} Overlap and Test Accuracy: {correlation:.4f}")
         print(f"Pearson Correlation between Differenced {label} Overlap and Test Accuracy: {diff_correlation:.4f}")
 
-        # Store the correlation and label for CSV output
         correlations.append([label, correlation, diff_correlation])
 
         ax1.plot(tasks[1:], diff_overlap, marker="o", label=f"Differenced {label} Pairwise Overlap")
@@ -124,6 +125,7 @@ def plot_differenced_overlap_and_accuracy(tasks, avg_overlap_dict, test_acc, win
 
 
 def plot_smoothed_test_accuracy(tasks, test_acc, window_size, save_path=None):
+    #We smooth the test accuracy of the full model and plot it 
     smoothed_test_acc = moving_average(test_acc, window_size)
     smoothed_variance = moving_variance(test_acc, window_size)
     smoothed_std_dev = np.sqrt(smoothed_variance)
