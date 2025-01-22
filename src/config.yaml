@@ -26,16 +26,16 @@ overlap_parameters_tickets:
   save_dir: ./results/overlap_parameters_tickets/first/
 winning_tickets_plasticity:
   models_dir: ./results/lop_experiment/10epochs/
-  masks_dir: ./results/winning_tickets_masks/masks/
-  target_percentage: 0.05
-  pruning_rounds: 10
-  num_tasks: 500
-  save_folder: ./results/winning_tickets_plasticity/
-winning_tickets_accuracy:
-  models_dir: ./results/lop_experiment/10epochs/
   masks_dir: ./results/winning_tickets_masks/new_masks/
   target_percentage: 0.05
   pruning_rounds: 10
+  num_tasks: 100
+  save_folder: ./results/winning_tickets_plasticity/
+winning_tickets_accuracy:
+  models_dir: ./results/lop_experiment/10epochs/
+  masks_dir: ./results/winning_tickets_masks/masks/
+  target_percentage: 0.5
+  pruning_rounds: 5
   save_folder: ./results/winning_tickets_accuracy/
 test_random_masks:
   models_dir: ./results/lop_experiment/10epochs/
