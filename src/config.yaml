@@ -31,3 +31,14 @@ winning_tickets_plasticity:
   pruning_rounds: 10
   num_tasks: 500
   save_folder: ./results/winning_tickets_plasticity/
+winning_tickets_accuracy:
+  models_dir: ./results/lop_experiment/10epochs/
+  masks_dir: ./results/winning_tickets_masks/new_masks/
+  target_percentage: 0.05
+  pruning_rounds: 10
+  save_folder: ./results/winning_tickets_accuracy/
+test_random_masks:
+  models_dir: ./results/lop_experiment/10epochs/
+  target_percentage: 0.05
+  save_folder: ./results/test_random_masks/
+  num_masks_per_task: 10
