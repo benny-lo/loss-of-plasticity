@@ -36,8 +36,6 @@ def main():
 
 
     lop_experiment1(model)
-    
-
     lop_experiment1(ticket)
 
 
