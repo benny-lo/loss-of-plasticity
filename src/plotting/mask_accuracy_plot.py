@@ -2,9 +2,7 @@ import yaml
 import matplotlib.pyplot as plt
 import numpy as np
 from plot_util import extract_pickle_from_zip, get_test_accuracies_at_tasks, save_plot
-import scienceplots  # Import the scienceplots for publication quality
 
-plt.style.use(['science', 'ieee'])
 
 def load_config(config_path):
     with open(config_path, 'r') as file:

@@ -13,7 +13,6 @@ def load_data_from_zip(zip_file_path, grad_files_in_zip):
                 with zf.open(grad_file) as file:
                     data = pickle.load(file)
                     all_data[grad_file] = data
-                #print(f"Data loaded successfully for {grad_file}")
             else:
                 print(f"File '{grad_file}' not found in the zip archive.")
     return all_data
