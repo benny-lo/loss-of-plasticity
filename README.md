@@ -22,12 +22,6 @@ This research was conducted as part of the ETH Zürich *Deep Learning 2024-2025*
 │   │   ├── _init_.py
 │   │   └── mnist.py
 │   ├── plotting
-│   │   ├── mask_accuracy_plot.py
-│   │   ├── plot_config.yaml
-│   │   ├── plot_util.py
-│   │   ├── plotting_average_overlap_all.py
-│   │   ├── plotting_overlap_parameters.py
-│   │   └── plotting_winning_ticket_plasticity.py
 │   ├── config.yaml
 │   ├── experiments.py
 │   ├── lottery_tickets.py
