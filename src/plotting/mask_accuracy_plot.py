@@ -42,28 +42,21 @@ def main(config_path="plot_config.yaml"):
     tasks = sorted(map(int, data.keys()))
 
     test_acc = get_test_accuracies_at_tasks(task_performance, tasks)
-
     plt.figure(figsize=(8, 6))
-
-
-    #Plots accuracy of full network
-    plt.plot(tasks1, test_acc, color='g', linestyle='-',
-             marker='^', label='Full Network Test Accuracy')
-
-
-    #Plots average accuracy of random masks
-    plt.plot(tasks1, mean_test_acc1, marker='o', linestyle='-',
-             color='b', label='Random Masks Test Accuracy')
-    
-    #Plots average accuracy of the masks found by IMP
-    plt.plot(tasks2, mean_test_acc2, marker='s', linestyle='--',
-             color='r', label='Winning Tickets Test Accuracy')
-    plt.xlabel("Task")
-    plt.ylabel("Mean Test Accuracy")
-    plt.title("Mean Test Accuracy Comparison")
-    plt.grid(True)
-    plt.legend()
+    plt.plot(tasks1, test_acc, color='green', linestyle='-', linewidth=2,
+             marker='^', markersize=8, label='Full Network Test Accuracy')
+    plt.plot(tasks1, mean_test_acc1, color='blue', linestyle='-', linewidth=2,
+             marker='o', markersize=8, label='Random Masks Test Accuracy')
+    plt.plot(tasks2, mean_test_acc2, color='red', linestyle='--', linewidth=2,
+             marker='s', markersize=8, label='Winning Tickets Test Accuracy')
+    plt.xlabel("Task", fontsize=14)
+    plt.ylabel("Mean Test Accuracy", fontsize=14)
+    plt.title("Mean Test Accuracy Comparison", fontsize=16)
+    plt.grid(False)
+    plt.gca().set_facecolor('#f9f9f9')
+    plt.legend(fontsize=12, loc='best')
     save_plot(plt, files["plot_output_dir"])
+    plt.tight_layout()
     plt.show()
 
 

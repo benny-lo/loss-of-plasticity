@@ -18,22 +18,22 @@ def load_data_from_zip(zip_file_path, grad_files_in_zip):
     return all_data
 
 def plot_data(all_data, save_path):
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(10, 7))
     for grad_file, data in all_data.items():
-        keys = [int(k) for k in data.keys()]  
-        values = [tensor.item() for tensor in data.values()]  
-
+        keys = [int(k) for k in data.keys()]
+        values = [tensor.item() for tensor in data.values()]
         label = generate_pruned_string(grad_file) or grad_file.split('/')[-1]
+        plt.plot(keys, values, marker='o', linewidth=2, markersize=8, label=label)
 
-        plt.plot(keys, values, marker='o', label=label)
-
-    plt.xlabel('Task')
-    plt.ylabel('Parameter Overlap')
-    plt.title('Parameter Overlap Across Versions')
-    plt.legend()
-    plt.grid(True)
-
+    plt.xlabel('Task', fontsize=14)
+    plt.ylabel('Parameter Overlap', fontsize=14)
+    plt.title('Parameter Overlap Across Versions', fontsize=16)
+    plt.legend(fontsize=12, loc='best')
+    plt.grid(False)
+    plt.gca().set_facecolor('#f9f9f9')
+    plt.tight_layout()
     save_plot(plt.gcf(), save_path)
+
 
 
 def main():

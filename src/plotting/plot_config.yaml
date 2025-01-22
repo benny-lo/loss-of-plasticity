@@ -1,9 +1,9 @@
 correlation_save_path: "correlation.csv"
 differenced_plot_path: "differenced_overlap_accuracy_plot.png"
 grad_files_in_zip: #Location of the overlap of the data containing the overlap of the masks found by IMP with the masks found by looking at gradient
-  - "overlap_parameters_tickets/union/overlap_parameters_tickets_target_percentage_0.05_pruning_rounds_10"
-  - "overlap_parameters_tickets/union/overlap_parameters_tickets_target_percentage_0.1_pruning_rounds_5"
-  - "overlap_parameters_tickets/union/overlap_parameters_tickets_target_percentage_0.2_pruning_rounds_3"
+  - "overlap_parameters_tickets/intersection/overlap_parameters_tickets_target_percentage_0.05_pruning_rounds_10"
+  - "overlap_parameters_tickets/intersection/overlap_parameters_tickets_target_percentage_0.1_pruning_rounds_5"
+  - "overlap_parameters_tickets/intersection/overlap_parameters_tickets_target_percentage_0.2_pruning_rounds_3"
 imp_plot_path: "importance_overlap_plot.png"
 last_saved_plot: "importance_overlap_plot"
 output_file_path: "extracted_contents.pkl"
