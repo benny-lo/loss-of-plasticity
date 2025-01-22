@@ -13,6 +13,7 @@ This research was conducted as part of the ETH Zürich *Deep Learning 2024-2025*
 
 
 ## Repository Structure
+```
 ├── README.md
 ├── requirements.txt
 ├── src
@@ -37,7 +38,7 @@ This research was conducted as part of the ETH Zürich *Deep Learning 2024-2025*
 │       ├── training.py
 │       └── utils.py
 ├── .gitignore
-
+```
 
 ## Installation & Setup
 
