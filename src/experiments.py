@@ -130,6 +130,7 @@ def winning_tickets_accuracy(cfg, dataset, device):
             perm_test = datasets.mnist.PermutedMNIST(dataset[1], permutation)
 
             model = models.SimpleMLP()
+            model = model.to(device)
         else:
             raise NotImplementedError
 
@@ -173,8 +174,10 @@ def test_random_masks(cfg, dataset, device):
             perm_test = datasets.mnist.PermutedMNIST(dataset[1], permutation)
 
             model = models.SimpleMLP()
+            model = model.to(device)
         else:
             raise NotImplementedError
+        
 
         train_loader = torch.utils.data.DataLoader(perm_train, batch_size=cfg.general.batch_size, shuffle=True)
         test_loader = torch.utils.data.DataLoader(perm_test, batch_size=cfg.general.batch_size, shuffle=False)
