@@ -1,14 +1,11 @@
 import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader, Dataset
-from torchvision import datasets, transforms
 import copy
 import numpy as np
 
 import models
 import training
 import utils
+import datasets.mnist
 
 def mask_selection(cfg,masks):
     criterion  = cfg.overlap_parameters_tickets.mask_selection_criterion
@@ -16,8 +13,6 @@ def mask_selection(cfg,masks):
         return masks[0]
     
     num_parameters = len(masks[0])
-
-    ones_percentage = utils.percentage_of_ones(masks[0])
 
     aggregations = []
 
@@ -127,7 +122,7 @@ def find_winning_ticket(cfg, model, train_loader, test_loader, device):
     return [x.to('cpu') for x in mask], accuracies
 
 def winning_tickets_helper(cfg, dataset, task_id, device):
-    print(f'task_id: {task_id}')
+    print(f'Task_id: {task_id}')
     
     perm = np.load(cfg.winning_tickets_masks.models_dir + f'permutation_task{task_id}.npy')
     
@@ -158,11 +153,11 @@ def winning_tickets_helper(cfg, dataset, task_id, device):
         overlaps = []
         for i in range(cfg.winning_tickets_masks.num_tickets):
             for j in range(i+1, cfg.winning_tickets_masks.num_tickets):
-                overlaps.append(utils.compute_pairwise_overlap(masks[i],masks[j]).cpu().item())
+                overlaps.append(compute_pairwise_overlap(masks[i],masks[j]).cpu().item())
         overlaps = np.array(overlaps)
         avg_overlap, std_overlap = np.mean(overlaps), np.std(overlaps)
         return {'average pairwise overlap':avg_overlap, 'pairwise overlap std':std_overlap}
 
     else:
-        total_overlap = utils.compute_overlap(masks)
+        total_overlap = compute_overlap(masks)
         return {'total_overlap': total_overlap}

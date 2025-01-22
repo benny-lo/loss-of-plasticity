@@ -100,10 +100,10 @@ def winning_tickets_masks(cfg, dataset, device):
         stats_dict[task_id] = lottery_tickets.winning_tickets_helper(cfg, dataset, task_id, device)
 
     utils.create_folder(cfg.winning_tickets_masks.save_folder)
-    utils.dump_pickle_obj(obj=stats_dict, path=cfg.winning_tickets_masks.save_folder + f'./results/winning_tickets_masks/pairwise_{cfg.winning_tickets_masks.pairwise}_target_percentage_{cfg.winning_tickets_masks.target_percentage}_pruning_rounds_{cfg.winning_tickets_masks.pruning_rounds}')
+    utils.dump_pickle_obj(obj=stats_dict, path=cfg.winning_tickets_masks.save_folder + f'pairwise_{cfg.winning_tickets_masks.pairwise}_target_percentage_{cfg.winning_tickets_masks.target_percentage}_pruning_rounds_{cfg.winning_tickets_masks.pruning_rounds}')
 
 def parameter_plasticity(cfg, dataset, device):
-    task_ids = cfg.winning_tickets_plasticity.tasks
+    task_ids = cfg.parameter_plasticity.tasks
 
     for task_id in task_ids:
         print(f"\nTask {task_id + 1}")
@@ -157,6 +157,7 @@ def winning_tickets_accuracy(cfg, dataset, device):
             tickets_performance[task_id]["test_loss"].append(test_loss)
             tickets_performance[task_id]["test_acc"].append(test_acc)
 
+            utils.create_folder(cfg.winning_tickets_accuracy.save_folder)
             with open(cfg.winning_tickets_accuracy.save_folder + 'output.txt', 'a') as file:
                 print(f'Full model performance', file=file)
                 print(f"Task {task_id + 1} - Train Loss: {task_performance['train_loss'][task_id]:.4f}, Train Acc: {task_performance['train_acc'][task_id]:.4f}", file=file)
@@ -212,6 +213,7 @@ def test_random_masks(cfg, dataset, device):
             random_tickets_performance[task_id]["test_loss"].append(test_loss)
             random_tickets_performance[task_id]["test_acc"].append(test_acc)
 
+            utils.create_folder(cfg.test_random_masks.save_folder)
             with open(cfg.test_random_masks.save_folder + 'output.txt', 'a') as file:
                 print(f'Full model performance', file=file)
                 print(f"Task {task_id + 1} - Train Loss: {task_performance['train_loss'][task_id]:.4f}, Train Acc: {task_performance['train_acc'][task_id]:.4f}", file=file)
@@ -233,16 +235,16 @@ def overlap_parameters_tickets(cfg):
 
     task_ids = cfg.overlap_parameters_tickets.tasks
     for task_id in task_ids:
-        target_percentage_values = cfg.overlap_paramters_tickets.target_percentages_values
+        target_percentage_values = cfg.overlap_parameters_tickets.target_percentages_values
         pruning_rounds_values = cfg.overlap_parameters_tickets.pruning_rounds_values
 
         for target_percentage, pruning_rounds in zip(target_percentage_values, pruning_rounds_values):
             print(f"running mask {task_id} with params {target_percentage} {pruning_rounds}")
 
-            mask_file = open(masks_dir + f'masks_task_{task_id}_target_percentage_{target_percentage}_pruning_rounds_{pruning_rounds}','rb')
-            masks = torch.load(mask_file)
+            mask_file = masks_dir + f'masks_task_{task_id}_target_percentage_{target_percentage}_pruning_rounds_{pruning_rounds}'
+            masks = utils.load_pickle_obj(mask_file)
             mask = lottery_tickets.mask_selection(cfg,masks)
-            grad_file = open(gradients_dir + f'gradients_stats_snapshot_start_task{task_id}','rb')
+            grad_file = gradients_dir + f'gradients_stats_snapshot_start_task{task_id}'
             grad = utils.load_pickle_obj(grad_file)['avg_grad']
 
             if len(grad) > 2:
@@ -280,7 +282,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         'experiment_name', 
-        choices=['lop', 'winning_tickets_masks', 'winning_tickets_plasticity', 'winning_tickets_accuracy', 'test_random_masks'])
+        choices=['lop', 'winning_tickets_masks', 'winning_tickets_plasticity', 'winning_tickets_accuracy', 'test_random_masks', 'parameter_plasticity'])
 
     args = parser.parse_args()
 
@@ -295,6 +297,8 @@ def main():
         winning_tickets_accuracy(cfg=cfg, dataset=dataset, device=device)
     elif args.experiment_name == 'test_random_masks':
         test_random_masks(cfg=cfg, dataset=dataset, device=device)
+    elif args.experiment_name == 'parameter_plasticity':
+        parameter_plasticity(cfg=cfg, dataset=dataset, device=device)
     else:
         raise NotImplementedError
 
