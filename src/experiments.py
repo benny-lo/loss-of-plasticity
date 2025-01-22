@@ -7,7 +7,7 @@ import models
 import lottery_tickets
 import training
 import utils
-import datasets
+import datasets.mnist
 
 def lop(cfg, model, dataset, num_tasks, save_folder, save, save_freq, device, mask=None):
     if cfg.general.dataset == 'mnist':
