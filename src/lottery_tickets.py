@@ -3,156 +3,165 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
 from torchvision import datasets, transforms
-import time
+import copy
+import numpy as np
 
-from models import train_model, evaluate_model, SimpleMLP
+import models
+import training
+import utils
 
-class MNIST(Dataset):
-    def __init__(self, mnist_data):
-        
-        self.data = mnist_data.data
-        self.targets = mnist_data.targets
-
-    def __len__(self):
-        return len(self.data)
-
-    def __getitem__(self, idx):
-        return self.data[idx], self.targets[idx]
-
-
-def prune_model(model, mask, s):
-    """Prune s% of the parameters."""
-    with torch.no_grad():
-        weights = torch.cat([param[mask[idx] > 0].abs().view(-1) for idx, param in enumerate(model.parameters())])
-        threshold = torch.quantile(weights, s / 100)
-
-        if threshold == 0:
-            print("warning very sparse parameters")
-            threshold = 1e-6
-
-        for idx, param in enumerate(model.parameters()):
-            mask[idx][param.abs() < threshold] = 0
-            param[mask[idx] == 0] = 0
-    return mask
-
-def reset_weights(model, initial_state, mask):
-    """Reset only the unpruned weights to their initial state."""
+def mask_selection(cfg,masks):
+    criterion  = cfg.overlap_parameters_tickets.mask_selection_criterion
+    if criterion == 'first':
+        return masks[0]
     
-    for idx, param in enumerate(model.parameters()):
-        with torch.no_grad():
-            param[mask[idx] > 0] = initial_state[idx][mask[idx] > 0]
+    num_parameters = len(masks[0])
 
+    ones_percentage = utils.percentage_of_ones(masks[0])
 
-def initialize_mnist():
-    mnist_train = datasets.MNIST(root="./data", train=True, download=True, transform=transforms.ToTensor())
-    mnist_test = datasets.MNIST(root="./data", train=False, download=True, transform=transforms.ToTensor())
+    aggregations = []
 
+    for i in range(num_parameters):
+        param_aggregation = masks[0][i]
 
+        for mask in masks[1:]:
+            if criterion == 'intersection':
+                param_aggregation = param_aggregation & mask[i]
+            if criterion == 'union':
+                param_aggregation = param_aggregation | mask[i]
+            if criterion == 'average':
+                raise NotImplementedError         
 
-    train_dataset = MNIST(mnist_train)
-    test_dataset = MNIST(mnist_test)
-    batch_size = 32
+        aggregations.append(param_aggregation)
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    return aggregations
 
+def compute_pairwise_overlap(mask1, mask2):
 
-    criterion = nn.CrossEntropyLoss()
+    assert(len(mask1)== len(mask2))
 
-    return train_loader, test_loader, criterion
+    intersection = 0
+    union = 0
 
+    for idx in range(len(mask1)):
+        m1 = mask1[idx]
+        m2 = mask2[idx]
 
-
-
-def find_winning_ticket(model,train_loader=None, test_loader=None, criterion=None, performance_threshold=None, s=20, num_iter=5):
-
-    if train_loader is None:
-        train_loader, test_loader, criterion = initialize_mnist()
+        # Ensure masks are binary
+        m1 = (m1 != 0).float()
+        m2 = (m2 != 0).float()
         
-
-
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
-
-    num_epochs = 3
-
-    initial_state = []
-
-    for param in model.parameters():
-        initial_state.append(param)
-
-    mask = [torch.ones_like(param) for param in model.parameters()]
-
-    print("\nFinding the Winning Ticket")
-    current_performance = evaluate_model(model, test_loader=test_loader, criterion=criterion,device="cpu")[1]
-    print(f"Initial performance: {current_performance}")
-
-
-    if performance_threshold == None:
-        performance_threshold = current_performance
-
-    for iter in range(num_iter):
-        # Prune the model
-        mask = prune_model(model, mask, s)
+        # Intersection: non-zero weights in both masks
+        intersection += torch.sum(m1 * m2)
         
-        # Reset weights to initial state
-        reset_weights(model, initial_state,mask)
+        # Union: non-zero weights in either mask
+        union += torch.sum((m1 + m2) > 0).float()
+        
+    # Overlap as percentage
+    overlap_percentage = (intersection / union) * 100 if union > 0 else 0.0
+    
+    return overlap_percentage
 
-        # Evaluate performance
-        current_performance = evaluate_model(model, test_loader=test_loader, criterion=criterion, device="cpu")[1]
-        print(f"Performance after pruning: {current_performance}")
+def compute_overlap(masks):
 
-        for _ in range(num_epochs):
-            train_model(model, train_loader=train_loader, optimizer=optimizer, criterion=criterion,device="cpu",mask= mask)
+    assert all(len(mask) == len(masks[0]) for mask in masks), "All masks must have the same length."
 
-        curr_performance = evaluate_model(model, test_loader=test_loader, criterion=criterion, device="cpu")[1]
-        print(f"Performance before pruning: {curr_performance}")
+    intersection = 0
+    union = 0
 
+    for idx in range(len(masks[0])):
+        bin_masks = [ (mask[idx] != 0).float() for mask in masks ]
 
-        pruning_percentage(model)
+        intersection += torch.sum(torch.prod(torch.stack(bin_masks), dim=0))
 
+        union += torch.sum(torch.any(torch.stack(bin_masks), dim=0).float())
 
-    if curr_performance > 0.9:
-        print("Winning ticket found!")
+    overlap_percentage = (intersection / union) * 100 if union > 0 else 0.0
+
+    return overlap_percentage
+
+def initialize_mask(model):
+    mask = []
+
+    for name,param in model.named_parameters():
+        if 'weight' in name:
+            mask.append(torch.ones_like(param))
 
     return mask
 
+def pruning(model,mask,pruning_per_round):
+    idx = 0
+    for name, param in model.named_parameters():
+        if 'weight' in name:
+            with torch.no_grad():
+                assert(param.shape == mask[idx].shape)
+                weights = param[mask[idx] > 0].abs().view(-1) 
+                threshold = torch.quantile(weights, 1 - pruning_per_round)
 
+                if threshold == 0:
+                    raise ValueError("Very sparse parameters")
+                    
+                mask[idx][param.abs() < threshold] = 0
+            idx += 1
+    return mask 
 
-def pruning_percentage(model):
-    total_weights = 0
-    non_zero_weights = 0
+def find_winning_ticket(cfg, model, data_loader, test_loader, device):
+    initial_params = copy.deepcopy(model.state_dict())
 
-    for param in model.parameters():
-        total_weights += param.numel()
-        non_zero_weights += torch.count_nonzero(param)
+    pruning_per_round = cfg.winning_tickets_masks.target_percentage ** (1 / cfg.winning_tickets_masks.pruning_rounds)
 
-    # Calculate and print percentage
-    percentage_non_zero = (non_zero_weights / total_weights) * 100
-    print(f"Percentage of non-zero weights in the model: {percentage_non_zero:.2f}%")
+    accuracies = np.zeros(cfg.winning_tickets_masks.pruning_rounds + 1)
 
+    mask = initialize_mask(model)
 
+    for r in range(cfg.winning_tickets_masks.pruning_rounds):
+        model.load_state_dict(initial_params)
+        
+        training.train_model(cfg, model, data_loader, device, cfg.general.num_epochs,mask=mask)        
+        accuracies[r] = training.evaluate_model(cfg, model, test_loader, device, mask=mask)[1]
 
+        pruning(model, mask, pruning_per_round)
 
-def main():
+    accuracies[cfg.winning_tickets_masks.pruning_rounds] = training.evaluate_model(cfg, model, test_loader, device, mask=mask)[1]
 
-    model = SimpleMLP()
+    return [x.to('cpu') for x in mask], accuracies
+
+def winning_tickets_helper(cfg, dataset, task_id, device):
+    print(f'task_id: {task_id}')
     
+    perm = np.load(cfg.winning_tickets_masks.models_dir + f'permutation_task{task_id}.npy')
+    
+    perm_train = datasets.mnist.PermutedMNIST(dataset[0], perm)
+    perm_test = datasets.mnist.PermutedMNIST(dataset[1], perm)
+
+    train_loader = torch.utils.data.DataLoader(perm_train, batch_size=cfg.general.batch_size, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(perm_test, batch_size=cfg.general.batch_size, shuffle=False)
+
+    masks = []
+    for ticket_id in range(cfg.winning_tickets_masks.num_tickets):
+        if cfg.general.dataset == 'mnist':
+            model = models.SimpleMLP()
+        else:
+            raise NotImplementedError
+    
+        model = model.to(device)
+        model.load_state_dict(torch.load(cfg.winning_tickets_masks.models_dir + f'snapshot_start_task{task_id}', weights_only=True))
+        
+        print(f"finding {ticket_id} winning ticket")
+        mask, _ = find_winning_ticket(cfg, model, train_loader, test_loader, device)
+        masks.append(mask)
+    utils.dump_pickle_obj(masks,f"./results/winning_tickets_masks/masks/masks_task_{task_id}_target_percentage_{cfg.winning_tickets_masks.target_percentage}_pruning_rounds_{cfg.winning_tickets_masks.pruning_rounds}")
 
 
-    train_loader, test_loader, criterion = initialize_mnist()
+    if cfg.winning_tickets_masks.pairwise:
+        overlaps = []
+        for i in range(cfg.winning_tickets_masks.num_tickets):
+            for j in range(i+1, cfg.winning_tickets_masks.num_tickets):
+                overlaps.append(utils.compute_pairwise_overlap(masks[i],masks[j]).cpu().item())
+        overlaps = np.array(overlaps)
+        avg_overlap, std_overlap = np.mean(overlaps), np.std(overlaps)
+        return {'average pairwise overlap':avg_overlap, 'pairwise overlap std':std_overlap}
 
-
-    performance_threshold = 0.95
-    s = 20
-
-    train_model(model,train_loader,optimizer=optim.Adam(model.parameters(), lr=0.001),criterion=criterion,device="cpu")
-
-    find_winning_ticket(model, train_loader, test_loader, criterion, performance_threshold, s)
-
-
-
-
-
-if __name__ == "__main__":
-    main()
-
+    else:
+        total_overlap = utils.compute_overlap(masks)
+        return {'total_overlap': total_overlap}

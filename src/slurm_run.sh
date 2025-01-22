@@ -6,9 +6,4 @@
 #SBATCH --error=test_error.txt     
 #SBATCH --time=1-00:00:00 
 
-
-conda init
-conda activate lop_env
-
-
-python src/experiments.py
+python src/experiments.py --experiment_name "$1"

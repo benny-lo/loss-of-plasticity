@@ -1,28 +1,26 @@
-import utils
-import datasets.mnist
 import numpy as np
 import torch
-import models
-import training
 import os
-from overlap import compute_pairwise_overlap, compute_overlap
-from actual_lottery_tickets import find_winning_ticket
-import box
-import pickle
+import argparse
 
+import models
+import lottery_tickets
+import training
+import utils
+import datasets
 
 def lop(cfg, model, dataset, num_tasks, save_folder, save, save_freq, device, mask=None):
     if cfg.general.dataset == 'mnist':
         permutations = [np.random.permutation(28 * 28) for _ in range(num_tasks)]
-    
+    else:
+        raise NotImplementedError
+
     if save:
         for task_id, perm in enumerate(permutations):
             np.save(save_folder + f'permutation_task{task_id}', arr=perm)
 
     train = dataset[0]
     test = dataset[1]
-
-    model = model.to(device)
 
     task_performance = {"train_loss": [], "train_acc": [], "test_loss": [], "test_acc": []}
 
@@ -63,6 +61,7 @@ def lop_experiment(cfg, dataset, device):
     else:
         raise NotImplementedError
     
+    model = model.to(device)
     lop(cfg, model, dataset, cfg.lop_experiment.num_tasks, cfg.lop_experiment.save_folder, True, cfg.lop_experiment.save_freq, device)
 
 def winning_tickets_plasticity(cfg, dataset, device):
@@ -71,11 +70,13 @@ def winning_tickets_plasticity(cfg, dataset, device):
     else:
         raise NotImplementedError
 
+    model = model.to(device)
+
     task_ids = list(range(0, 50, 50))
     for task_id in task_ids:
         model.load_state_dict(torch.load(cfg.winning_tickets_plasticity.models_dir + f'snapshot_start_task{task_id}', weights_only=True))
-        with open(cfg.winning_tickets_plasticity.masks_dir + f'masks_task_{task_id}_target_percentage_{cfg.winning_tickets_plasticity.target_percentage}_pruning_rounds_{cfg.winning_tickets_plasticity.pruning_rounds}', 'rb') as file: 
-            masks = pickle.load(file)
+        masks = utils.load_pickle_obj(cfg.winning_tickets_plasticity.masks_dir + f'masks_task_{task_id}_target_percentage_{cfg.winning_tickets_plasticity.target_percentage}_pruning_rounds_{cfg.winning_tickets_plasticity.pruning_rounds}')
+
         lop(
             cfg, 
             model, 
@@ -89,32 +90,38 @@ def winning_tickets_plasticity(cfg, dataset, device):
         )
 
 def winning_tickets_masks(cfg, dataset, device):
-    print(device)
     models_dir = cfg.winning_tickets_masks.models_dir
 
     task_ids = utils.get_unique_ids(models_dir)
     stats_dict  = {}
 
     for task_id in task_ids:
-        stats_dict[task_id] = utils.winning_tickets_helper(cfg, dataset, task_id, device)
+        stats_dict[task_id] = lottery_tickets.winning_tickets_helper(cfg, dataset, task_id, device)
 
     utils.dump_pickle_obj(obj=stats_dict, path=f'./results/winning_tickets_masks/pairwise_{cfg.winning_tickets_masks.pairwise}_target_percentage_{cfg.winning_tickets_masks.target_percentage}_pruning_rounds_{cfg.winning_tickets_masks.pruning_rounds}')
 
+def parameter_plasticity(cfg, dataset, device):
+    models_dir = cfg.winning_tickets_masks.models_dir
 
+    task_ids = utils.get_unique_ids(models_dir)
+    task_ids = [int(x) for x in task_ids]
 
-def parameter_plasticity(cfg,model,model_name,dataset,device):
-    train = dataset[0]
+    for task_id in task_ids:
+        print(f"\nTask {task_id + 1}")
+        if cfg.general.dataset == 'mnist':
+            model = models.SimpleMLP()
+        else:
+            raise NotImplementedError
 
-    model = model.to(device)
-    
-    train_loader = torch.utils.data.DataLoader(train, batch_size=cfg.general.batch_size, shuffle=True)
-
-    gradient = training.train_model_gradient(cfg, model, train_loader, device, num_epochs=cfg.general.num_epochs)
-
-    gradients_stats = utils.aggregate_gradient_stats([gradient])
-
-    utils.dump_pickle_obj(obj=gradients_stats, path=f'./results/parameter_plasticity/gradients_stats_{model_name}')
-
+        model = model.to(device)
+        model.load_state_dict(torch.load(cfg.winning_tickets_masks.models_dir + f'snapshot_start_task{task_id}', weights_only=True))
+        model_name = f'snapshot_start_task{task_id}'
+        
+        train_dataset = dataset[0]        
+        train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=cfg.general.batch_size, shuffle=True)
+        gradient = training.train_model_gradient(cfg, model, train_loader, device, num_epochs=cfg.general.num_epochs)  
+        gradients_stats = utils.aggregate_gradient_stats([gradient])
+        utils.dump_pickle_obj(obj=gradients_stats, path=f'./results/parameter_plasticity/gradients_stats_{model_name}')
 
 def winning_tickets_accuracy(cfg, dataset, device):
     task_performance = utils.load_pickle_obj(cfg.winning_tickets_accuracy.models_dir + 'task_performance')
@@ -137,7 +144,7 @@ def winning_tickets_accuracy(cfg, dataset, device):
         train_loader = torch.utils.data.DataLoader(perm_train, batch_size=cfg.general.batch_size, shuffle=True)
         test_loader = torch.utils.data.DataLoader(perm_test, batch_size=cfg.general.batch_size, shuffle=False)
 
-        masks = torch.load(cfg.winning_tickets_accuracy.masks_dir + f'masks_task_{task_id}_target_percentage_{cfg.winning_tickets_accuracy.target_percentage}_pruning_rounds_{cfg.winning_tickets_accuracy.pruning_rounds}')
+        masks = utils.load_pickle_obj(cfg.winning_tickets_accuracy.masks_dir + f'masks_task_{task_id}_target_percentage_{cfg.winning_tickets_accuracy.target_percentage}_pruning_rounds_{cfg.winning_tickets_accuracy.pruning_rounds}')
         for mask in masks:
             model.load_state_dict(torch.load(cfg.winning_tickets_accuracy.models_dir + f'snapshot_start_task{task_id}', weights_only=True))
             train_loss, train_acc = training.train_model(cfg, model, train_loader, device, num_epochs=cfg.general.num_epochs, mask=mask)
@@ -214,6 +221,47 @@ def test_random_masks(cfg, dataset, device):
 
     utils.dump_pickle_obj(random_tickets_performance, cfg.test_random_masks.save_folder + 'tickets_performance')
 
+def overlap_parameters_tickets(cfg):
+    stats_dict = {}
+    masks_dir = cfg.overlap_parameters_tickets.masks_dir
+    gradients_dir = cfg.overlap_parameters_tickets.gradients_dir
+
+    task_ids = utils.get_unique_ids(masks_dir)
+    for task_id in task_ids:
+        target_percentage_values = [0.2,0.1,0.05]
+        pruning_rounds_values = [3,5,10]
+
+        for idx in range(3):
+            target_percentage = target_percentage_values[idx]
+            pruning_rounds = pruning_rounds_values[idx]
+
+            print(f"running mask {task_id} with params {target_percentage} {pruning_rounds}")
+
+            mask_file = open(masks_dir + f'masks_task_{task_id}_target_percentage_{target_percentage}_pruning_rounds_{pruning_rounds}','rb')
+            masks = torch.load(mask_file)
+            mask = lottery_tickets.mask_selection(cfg,masks)
+            grad_file = open(gradients_dir + f'gradients_stats_snapshot_start_task{task_id}','rb')
+            grad = utils.load_pickle_obj(grad_file)['avg_grad']
+
+            if len(grad) > 2:
+                grad = grad[:2]
+
+            ones_percentage = utils.percentage_of_ones(mask)
+
+            grad_mask = []
+
+            for param_grad in grad:
+                grad_mask.append(torch.ones_like(param_grad))
+
+                threshold = torch.quantile(param_grad.abs().view(-1) ,1-ones_percentage)
+
+                grad_mask[-1][param_grad.abs() < threshold] = 0
+
+            ticket_parameters_overlap = lottery_tickets.compute_pairwise_overlap(mask,grad_mask)
+            stats_dict[task_id]= ticket_parameters_overlap
+            print(f"overlap between ticket and most important parameters : {ticket_parameters_overlap}")
+            utils.dump_pickle_obj(stats_dict,cfg.overlap_parameters_tickets.save_dir + f'overlap_parameters_tickets_{task_id}_target_percentage_{target_percentage}_pruning_rounds_{pruning_rounds}' )
+
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     cfg = utils.load_config()
@@ -225,17 +273,28 @@ def main():
         raise NotImplementedError
     
 
-    
-    #lop_experiment(cfg=cfg, dataset=dataset, device=device)
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        'experiment_name', 
+        required=True, 
+        choices=['lop', 'winning_tickets_masks', 'winning_tickets_plasticity', 'winning_tickets_accuracy', 'test_random_masks'])
 
-    #winning_tickets_masks(cfg=cfg, dataset=dataset,device=device)
+    parser.parse_args()
 
-    #winning_tickets_plasticity(cfg=cfg, dataset=dataset, device=device)
+    if parser.experiment_name == 'lop':
+        lop_experiment(cfg=cfg, dataset=dataset, device=device)
+    elif parser.experiment_name == 'winning_tickets_masks':
+        winning_tickets_masks(cfg=cfg, dataset=dataset, device=device)
+        overlap_parameters_tickets(cfg=cfg)
+    elif parser.experiment_name == 'winning_tickets_plasticity':
+        winning_tickets_plasticity(cfg=cfg, dataset=dataset, device=device)
+    elif parser.experiment_name == 'winning_tickets_accuracy':
+        winning_tickets_accuracy(cfg=cfg, dataset=dataset, device=device)
+    elif parser.experiment_name == 'test_random_masks':
+        test_random_masks(cfg=cfg, dataset=dataset, device=device)
+    else:
+        raise NotImplementedError
 
-    #winning_tickets_accuracy(cfg=cfg, dataset=dataset, device=device)
-
-    test_random_masks(cfg=cfg, dataset=dataset, device=device)
-    
 
 if __name__ == '__main__':
     main()
