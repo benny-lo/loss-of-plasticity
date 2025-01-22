@@ -150,8 +150,9 @@ def winning_tickets_helper(cfg, dataset, task_id, device):
         print(f"finding {ticket_id} winning ticket")
         mask, _ = find_winning_ticket(cfg, model, train_loader, test_loader, device)
         masks.append(mask)
-    utils.dump_pickle_obj(masks,f"./results/winning_tickets_masks/masks/masks_task_{task_id}_target_percentage_{cfg.winning_tickets_masks.target_percentage}_pruning_rounds_{cfg.winning_tickets_masks.pruning_rounds}")
 
+    utils.create_folder(cfg.winning_tickets_masks.save_folder + 'masks/')
+    utils.dump_pickle_obj(masks, cfg.winning_tickets_masks.save_folder + f"masks/masks_task_{task_id}_target_percentage_{cfg.winning_tickets_masks.target_percentage}_pruning_rounds_{cfg.winning_tickets_masks.pruning_rounds}")
 
     if cfg.winning_tickets_masks.pairwise:
         overlaps = []

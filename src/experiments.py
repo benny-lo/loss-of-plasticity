@@ -26,7 +26,7 @@ def lop(cfg, model, dataset, num_tasks, save_folder, save, save_freq, device, ma
     for task_id, perm in enumerate(permutations):
         print(f"\nTask {task_id + 1}/{len(permutations)}")
 
-        if save and task_id % save_freq == 0 :
+        if save and task_id % save_freq == 0:
             np.save(file=save_folder + f'permutation_task{task_id}', arr=perm)
             torch.save(model.state_dict(), save_folder + f'snapshot_start_task{task_id}')
 
@@ -55,6 +55,8 @@ def lop(cfg, model, dataset, num_tasks, save_folder, save, save_freq, device, ma
     utils.dump_pickle_obj(obj=task_performance, path=save_folder + 'task_performance')
 
 def lop_experiment(cfg, dataset, device):
+    utils.create_folder(cfg.lop_experiment.save_folder)
+
     if cfg.general.dataset == 'mnist':
         model = models.SimpleMLP()
     else:
@@ -64,6 +66,8 @@ def lop_experiment(cfg, dataset, device):
     lop(cfg, model, dataset, cfg.lop_experiment.num_tasks, cfg.lop_experiment.save_folder, True, cfg.lop_experiment.save_freq, device)
 
 def winning_tickets_plasticity(cfg, dataset, device):
+    utils.create_folder(cfg.winning_tickets_plasticity.save_folder)
+
     if cfg.general.dataset == 'mnist':
         model = models.SimpleMLP()
     else:
@@ -95,7 +99,8 @@ def winning_tickets_masks(cfg, dataset, device):
     for task_id in task_ids:
         stats_dict[task_id] = lottery_tickets.winning_tickets_helper(cfg, dataset, task_id, device)
 
-    utils.dump_pickle_obj(obj=stats_dict, path=f'./results/winning_tickets_masks/pairwise_{cfg.winning_tickets_masks.pairwise}_target_percentage_{cfg.winning_tickets_masks.target_percentage}_pruning_rounds_{cfg.winning_tickets_masks.pruning_rounds}')
+    utils.create_folder(cfg.winning_tickets_masks.save_folder)
+    utils.dump_pickle_obj(obj=stats_dict, path=cfg.winning_tickets_masks.save_folder + f'./results/winning_tickets_masks/pairwise_{cfg.winning_tickets_masks.pairwise}_target_percentage_{cfg.winning_tickets_masks.target_percentage}_pruning_rounds_{cfg.winning_tickets_masks.pruning_rounds}')
 
 def parameter_plasticity(cfg, dataset, device):
     task_ids = cfg.winning_tickets_plasticity.tasks
@@ -115,7 +120,9 @@ def parameter_plasticity(cfg, dataset, device):
         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=cfg.general.batch_size, shuffle=True)
         gradient = training.train_model_gradient(cfg, model, train_loader, device, num_epochs=cfg.general.num_epochs)  
         gradients_stats = {'avg_grad': gradient}
-        utils.dump_pickle_obj(obj=gradients_stats, path=f'./results/parameter_plasticity/gradients_stats_{model_name}')
+
+        utils.create_folder(cfg.parameter_plasticity.save_folder)
+        utils.dump_pickle_obj(obj=gradients_stats, path=cfg.parameter_plasticity.save_folder + f'gradients_stats_{model_name}')
 
 def winning_tickets_accuracy(cfg, dataset, device):
     task_performance = utils.load_pickle_obj(cfg.winning_tickets_accuracy.models_dir + 'task_performance')
@@ -161,6 +168,7 @@ def winning_tickets_accuracy(cfg, dataset, device):
 
                 print('--------------------------------', file=file)
 
+    utils.create_folder(cfg.winning_tickets_accuracy.save_folder)
     utils.dump_pickle_obj(tickets_performance, cfg.winning_tickets_accuracy.save_folder + 'tickets_performance')
 
 def test_random_masks(cfg, dataset, device):
@@ -215,6 +223,7 @@ def test_random_masks(cfg, dataset, device):
 
                 print('--------------------------------', file=file)
 
+    utils.create_folder(cfg.test_random_masks.save_folder)
     utils.dump_pickle_obj(random_tickets_performance, cfg.test_random_masks.save_folder + 'tickets_performance')
 
 def overlap_parameters_tickets(cfg):
@@ -253,7 +262,9 @@ def overlap_parameters_tickets(cfg):
             ticket_parameters_overlap = lottery_tickets.compute_pairwise_overlap(mask,grad_mask)
             stats_dict[task_id]= ticket_parameters_overlap
             print(f"overlap between ticket and most important parameters : {ticket_parameters_overlap}")
-            utils.dump_pickle_obj(stats_dict,cfg.overlap_parameters_tickets.save_dir + f'overlap_parameters_tickets_{task_id}_target_percentage_{target_percentage}_pruning_rounds_{pruning_rounds}' )
+            
+            utils.create_folder(cfg.overlap_parameters_tickets.save_folder)
+            utils.dump_pickle_obj(stats_dict,cfg.overlap_parameters_tickets.save_folder + f'overlap_parameters_tickets_{task_id}_target_percentage_{target_percentage}_pruning_rounds_{pruning_rounds}' )
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -286,7 +297,6 @@ def main():
         test_random_masks(cfg=cfg, dataset=dataset, device=device)
     else:
         raise NotImplementedError
-
 
 if __name__ == '__main__':
     main()

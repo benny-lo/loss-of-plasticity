@@ -30,6 +30,10 @@ def load_pickle_obj(path: str):
         obj = pickle.load(file)
     return obj       
 
+def create_folder(folder_path):
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+
 def percentage_of_ones(mask: list):
     total_elements = sum(t.numel() for t in mask)
     total_ones = sum(t.sum() for t in mask)
