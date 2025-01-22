@@ -28,16 +28,13 @@ This research was conducted as part of the ETH Zürich *Deep Learning 2024-2025*
 │   │   ├── plotting_average_overlap_all.py
 │   │   ├── plotting_overlap_parameters.py
 │   │   └── plotting_winning_ticket_plasticity.py
-│   └── wip
-│       ├── empiricalNTK.py
-│       ├── lop_on_tickets.py
-│       ├── config.yaml
-│       ├── experiments.py
-│       ├── lottery_tickets.py
-│       ├── models.py
-│       ├── slurm_run.sh
-│       ├── training.py
-│       └── utils.py
+│   ├── config.yaml
+│   ├── experiments.py
+│   ├── lottery_tickets.py
+│   ├── models.py
+│   ├── slurm_run.sh
+│   ├── training.py
+│   └── utils.py
 ├── .gitignore
 ```
 
