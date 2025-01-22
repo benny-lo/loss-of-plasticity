@@ -77,10 +77,12 @@ def plot_overlap_and_accuracy(tasks, avg_overlap_dict, test_acc, window_size, sa
 
     ax1.legend(loc="upper left")
     ax2.legend(loc="upper right")
-    plt.show()
+    
 
     if save_path:
         fig.savefig(save_path)
+        
+    plt.show()
 
 def plot_differenced_overlap_and_accuracy(tasks, avg_overlap_dict, test_acc, window_size, save_path=None, correlation_csv_path=None):
     diff_test_acc = compute_differences(test_acc)
@@ -115,10 +117,12 @@ def plot_differenced_overlap_and_accuracy(tasks, avg_overlap_dict, test_acc, win
 
     plt.suptitle("Differenced Average Pairwise Overlap and Test Accuracy", fontsize=14)
     fig.tight_layout()
-    plt.show()
+    
 
     if save_path:
         save_plot(fig, save_path)
+    
+    plt.show()
 
     # Save the correlation results to CSV if the path is provided
     if correlation_csv_path:
@@ -148,10 +152,12 @@ def plot_smoothed_test_accuracy(tasks, test_acc, window_size, save_path=None):
     plt.title("Smoothed Test Accuracy with Confidence Region Over Tasks", fontsize=14)
     plt.legend()
     plt.tight_layout()
-    plt.show()
+    
 
     if save_path:
         plt.savefig(save_path)
+        
+    plt.show()
 
 def process_and_plot_data(config):
     avg_overlap_dict = {}
@@ -182,7 +188,7 @@ def process_and_plot_data(config):
             range(len(task_performance["train_acc"])),
             task_performance["train_acc"],
             config["window_size"],
-            save_path=config.get("smoothed_test_accuracy_plot_path")
+            save_path=config["smoothed_test_accuracy_plot_path"]
         )
 def main():
     # Load configuration from the YAML file
