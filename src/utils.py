@@ -25,9 +25,14 @@ def seed_everything(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-def pickle_obj(obj, path):
+def dump_pickle_obj(obj, path):
     with open(path, 'wb') as file:
         pickle.dump(obj, file)
+
+def load_pickle_obj(path):
+    with open(path, 'rb') as file:
+        obj = pickle.load(file)
+    return obj
 
 def smooth_signal(signal, window_size):
 
@@ -97,7 +102,7 @@ def winning_tickets_helper(cfg, dataset, task_id, device):
         print(f"finding {ticket_id} winning ticket")
         mask, _ = find_winning_ticket(cfg, model, train_loader, test_loader, device)
         masks.append(mask)
-    pickle_obj(masks,f"./results/winning_tickets_masks/masks/masks_task_{task_id}_target_percentage_{cfg.winning_tickets_masks.target_percentage}_pruning_rounds_{cfg.winning_tickets_masks.pruning_rounds}")
+    dump_pickle_obj(masks,f"./results/winning_tickets_masks/masks/masks_task_{task_id}_target_percentage_{cfg.winning_tickets_masks.target_percentage}_pruning_rounds_{cfg.winning_tickets_masks.pruning_rounds}")
 
 
     if cfg.winning_tickets_masks.pairwise:
