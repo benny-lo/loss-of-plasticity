@@ -1,6 +1,5 @@
 import numpy as np
 import torch
-import os
 import argparse
 
 import models
@@ -72,7 +71,7 @@ def winning_tickets_plasticity(cfg, dataset, device):
 
     model = model.to(device)
 
-    task_ids = list(range(0, 50, 50))
+    task_ids = cfg.winning_tickets_plasticity.tasks
     for task_id in task_ids:
         model.load_state_dict(torch.load(cfg.winning_tickets_plasticity.models_dir + f'snapshot_start_task{task_id}', weights_only=True))
         masks = utils.load_pickle_obj(cfg.winning_tickets_plasticity.masks_dir + f'masks_task_{task_id}_target_percentage_{cfg.winning_tickets_plasticity.target_percentage}_pruning_rounds_{cfg.winning_tickets_plasticity.pruning_rounds}')
@@ -90,9 +89,7 @@ def winning_tickets_plasticity(cfg, dataset, device):
         )
 
 def winning_tickets_masks(cfg, dataset, device):
-    models_dir = cfg.winning_tickets_masks.models_dir
-
-    task_ids = utils.get_unique_ids(models_dir)
+    task_ids = cfg.winning_tickets_masks.tasks
     stats_dict  = {}
 
     for task_id in task_ids:
@@ -101,10 +98,7 @@ def winning_tickets_masks(cfg, dataset, device):
     utils.dump_pickle_obj(obj=stats_dict, path=f'./results/winning_tickets_masks/pairwise_{cfg.winning_tickets_masks.pairwise}_target_percentage_{cfg.winning_tickets_masks.target_percentage}_pruning_rounds_{cfg.winning_tickets_masks.pruning_rounds}')
 
 def parameter_plasticity(cfg, dataset, device):
-    models_dir = cfg.winning_tickets_masks.models_dir
-
-    task_ids = utils.get_unique_ids(models_dir)
-    task_ids = [int(x) for x in task_ids]
+    task_ids = cfg.winning_tickets_plasticity.tasks
 
     for task_id in task_ids:
         print(f"\nTask {task_id + 1}")
@@ -120,13 +114,14 @@ def parameter_plasticity(cfg, dataset, device):
         train_dataset = dataset[0]        
         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=cfg.general.batch_size, shuffle=True)
         gradient = training.train_model_gradient(cfg, model, train_loader, device, num_epochs=cfg.general.num_epochs)  
-        gradients_stats = utils.aggregate_gradient_stats([gradient])
+        gradients_stats = {'avg_grad': gradient}
         utils.dump_pickle_obj(obj=gradients_stats, path=f'./results/parameter_plasticity/gradients_stats_{model_name}')
 
 def winning_tickets_accuracy(cfg, dataset, device):
     task_performance = utils.load_pickle_obj(cfg.winning_tickets_accuracy.models_dir + 'task_performance')
     tickets_performance = {}
-    task_ids = range(0, 501, 50)
+    
+    task_ids = cfg.winning_tickets_accuracy.tasks
 
     for task_id in task_ids:
         tickets_performance[task_id] = {"train_loss": [], "train_acc": [], "test_loss": [], "test_acc": []}
@@ -171,7 +166,8 @@ def winning_tickets_accuracy(cfg, dataset, device):
 def test_random_masks(cfg, dataset, device):
     task_performance = utils.load_pickle_obj(cfg.test_random_masks.models_dir + 'task_performance')
     random_tickets_performance = {}
-    task_ids = range(0, 501, 50)
+    
+    task_ids = cfg.test_random_masks.tasks
 
     for task_id in task_ids:
         random_tickets_performance[task_id] = {"train_loss": [], "train_acc": [], "test_loss": [], "test_acc": []}
@@ -226,15 +222,12 @@ def overlap_parameters_tickets(cfg):
     masks_dir = cfg.overlap_parameters_tickets.masks_dir
     gradients_dir = cfg.overlap_parameters_tickets.gradients_dir
 
-    task_ids = utils.get_unique_ids(masks_dir)
+    task_ids = cfg.overlap_parameters_tickets.tasks
     for task_id in task_ids:
-        target_percentage_values = [0.2,0.1,0.05]
-        pruning_rounds_values = [3,5,10]
+        target_percentage_values = cfg.overlap_paramters_tickets.target_percentages_values
+        pruning_rounds_values = cfg.overlap_parameters_tickets.pruning_rounds_values
 
-        for idx in range(3):
-            target_percentage = target_percentage_values[idx]
-            pruning_rounds = pruning_rounds_values[idx]
-
+        for target_percentage, pruning_rounds in zip(target_percentage_values, pruning_rounds_values):
             print(f"running mask {task_id} with params {target_percentage} {pruning_rounds}")
 
             mask_file = open(masks_dir + f'masks_task_{task_id}_target_percentage_{target_percentage}_pruning_rounds_{pruning_rounds}','rb')
