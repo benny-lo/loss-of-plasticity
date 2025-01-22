@@ -276,21 +276,20 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         'experiment_name', 
-        required=True, 
         choices=['lop', 'winning_tickets_masks', 'winning_tickets_plasticity', 'winning_tickets_accuracy', 'test_random_masks'])
 
-    parser.parse_args()
+    args = parser.parse_args()
 
-    if parser.experiment_name == 'lop':
+    if args.experiment_name == 'lop':
         lop_experiment(cfg=cfg, dataset=dataset, device=device)
-    elif parser.experiment_name == 'winning_tickets_masks':
+    elif args.experiment_name == 'winning_tickets_masks':
         winning_tickets_masks(cfg=cfg, dataset=dataset, device=device)
         overlap_parameters_tickets(cfg=cfg)
-    elif parser.experiment_name == 'winning_tickets_plasticity':
+    elif args.experiment_name == 'winning_tickets_plasticity':
         winning_tickets_plasticity(cfg=cfg, dataset=dataset, device=device)
-    elif parser.experiment_name == 'winning_tickets_accuracy':
+    elif args.experiment_name == 'winning_tickets_accuracy':
         winning_tickets_accuracy(cfg=cfg, dataset=dataset, device=device)
-    elif parser.experiment_name == 'test_random_masks':
+    elif args.experiment_name == 'test_random_masks':
         test_random_masks(cfg=cfg, dataset=dataset, device=device)
     else:
         raise NotImplementedError
