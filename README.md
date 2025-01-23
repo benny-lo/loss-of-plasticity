@@ -34,11 +34,13 @@ This research was conducted as part of the ETH Zürich *Deep Learning 2024-2025*
 
 ## Installation & Setup
 
-bash
+```
 git clone https://github.com/benny-lo/loss-of-plasticity.git
 cd loss-of-plasticity
+python -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
-
+```
 
 we use python=3.12.7
 
