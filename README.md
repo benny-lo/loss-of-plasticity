@@ -56,8 +56,8 @@ we use python=3.12.7
 - Compares plastic parameters with the identified winning tickets.
 
 All the experiments can be run with 
-bash
+```
 python src/experiments.py name_experiment
-
+```
 
 The experiments should be run sequentially, since the first produces the winning tickets and the data needed to compute the other two.
